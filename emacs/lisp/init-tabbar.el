@@ -15,8 +15,8 @@
 				centaur-tabs-set-close-button nil
                 centaur-tabs-set-modified-marker t)
   :bind (:map centaur-tabs-mode-map
-          ("C-r u" . centaur-tabs-backward)
-          ("C-r o" . centaur-tabs-forward)))
+          ("C-t u" . centaur-tabs-backward)
+          ("C-t o" . centaur-tabs-forward)))
 
 (provide 'init-tabbar)
 

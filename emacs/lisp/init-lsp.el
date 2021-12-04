@@ -3,16 +3,13 @@
 ;;; Code:
 
 (use-package lsp-mode
-  :init
-  ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
-  (setq lsp-keymap-prefix "C-r l")
   :hook ((lsp-mode . (lambda ()
                        (lsp-enable-which-key-integration)
                        (add-hook 'before-save-hook #'lsp-organize-imports t t)
                        (add-hook 'before-save-hook #'lsp-format-buffer t t)))
          (prog-mode . (lambda() (unless (derived-mode-p 'emacs-lisp-mode 'lisp-mode)(lsp-deferred)))))
   :commands (lsp lsp-deferred lsp-format-buffer lsp-organize-imports)
-  :config (setq lsp-keymap-prefix "C-r l")
+  :config (setq lsp-keymap-prefix "C-t l")
           (setq lsp-keep-workspace-alive nil ;; Auto kill LSP server
                 lsp-enable-indentation nil
                 lsp-enable-on-type-formatting t

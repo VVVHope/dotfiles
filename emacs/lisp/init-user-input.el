@@ -1,13 +1,6 @@
 ;;; init-user-input.el -*- coding: utf-8; lexical-binding: t; -*-
-;;; Commentary:
+;;; Commentary: key bindings darker than evil
 ;;; Code:
-
-(use-package multiple-cursors)
-
-;; drag-stuff - move lines up/down
-(use-package drag-stuff
-  :bind (("<M-up>". drag-stuff-up)
-         ("<M-down>" . drag-stuff-down)))
 
 ;; Unbind <C-i> from the TAB key and bind it to indent-region.
 ;; Since TAB and <C-i> cannot be differentiated in TTY emacs,
@@ -78,19 +71,29 @@
   ("C-w" . View-scroll-half-page-backward); scroll
   ("C-s" . View-scroll-half-page-forward)
   ("M-s" . recenter-top-bottom)
+  ("C-x w =" . enlarge-window); change frame
+  ("C-x w -" . shrink-window)
+  ("C-x w +" . enlarge-window-horizontally)
+  ("C-x w _" . shrink-window-horizontally)
+  ("C-x w i" . windmove-up)
+  ("C-x w j" . windmove-left)
+  ("C-x w k" . windmove-down)
+  ("C-x w l" . windmove-right)
   ("C-f" . ctrlf-forward-default); packages
   ("M-f" . ctrlf-backward-default))
+  
+(keyboard-translate ?\C-r ?\C-x); translate C-r to C-x
+(keyboard-translate ?\C-x ?\M-c); translate C-x to cut
 
-; universal-argument C-u
 ; TODO C/M-w C/M-y C-m
 ; prefix for git 
 ; C-/ (previously undo
 
 ;; create prefix
 (define-prefix-command 'my-prefix-map)
-(global-set-key (kbd "C-r") 'my-prefix-map)
+(global-set-key (kbd "C-t") 'my-prefix-map)
 (define-prefix-command 'my-combo-prefix-map)
-(global-set-key (kbd "C-r C-v") 'my-combo-prefix-map)
+(global-set-key (kbd "C-t C-y") 'my-combo-prefix-map)
 
 (bind-keys :map prog-mode-map
            ("C-." . lsp-find-definition)
@@ -100,11 +103,31 @@
 (global-set-key (kbd "C-x /") 'comment-line)
 (global-set-key (kbd "C-x ?") 'comment-or-uncomment-region)
 
+;; mouse input
+(global-unset-key (kbd "M-<down-mouse-1>"))
+(global-set-key (kbd "M-<mouse-1>") 'mc/add-cursor-on-click)
+
 (use-package hideshow
   :bind (("C-x [". hs-hide-block)
          ("C-x ]" . hs-show-block)))
 
-;; C-x w #num to change frame
+;; expand-region
+(use-package expand-region
+  :bind (("C-=" . er/expand-region)
+         ("C--" . er/contract-region)))
+
+;; multiple-cursors
+(use-package multiple-cursors
+  :bind ("C-\\" . mc/mark-next-like-this)
+  :config (define-key mc/keymap (kbd "<return>") nil);make <return> insert a newline, multiple-cursors-mode can still be disabled with C-g
+)
+
+;; drag-stuff - move lines up/down
+(use-package drag-stuff
+  :bind (("<M-up>". drag-stuff-up)
+         ("<M-down>" . drag-stuff-down)))
+
+;; C-x w #num to switch frame
 (use-package winum
   :hook (after-init . winum-mode))
 
