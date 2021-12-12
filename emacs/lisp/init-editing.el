@@ -7,10 +7,14 @@
 (set-face-attribute 'hl-line nil :inherit nil :background "#171717")
 ;; abbreviation
 (defalias 'yes-or-no-p 'y-or-n-p)
-;; file operation
-(setq make-backup-files nil
-      auto-save-default nil
-      create-lockfiles nil)
+;; auto-saving
+(auto-save-visited-mode 1)
+(setq auto-save-default nil)
+;; backup
+(setq create-lockfiles nil)
+(setq make-backup-files t)
+(setq backup-directory-alist
+      `(("." . ,(concat user-emacs-directory "backups"))))
 ;; parentheses
 (setq blink-matching-paren t)
 (setq-default show-paren-style 'mixed
