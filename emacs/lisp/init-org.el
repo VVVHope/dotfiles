@@ -188,7 +188,18 @@
 
 ;; toggle visibility of invisible Org elements depending on cursor position
 (use-package org-appear 
-  :hook (org-mode . org-appear-mode))
+  :hook (org-mode . org-appear-mode)
+  :config (setq org-appear-autolinks t
+                org-appear-autosubmarkers t
+				org-appear-autoentities t
+				org-appear-autokeywords t))
+
+;; Prevent editing of text within collapsed subtree
+(setq-default org-catch-invisible-edits 'smart)
+
+;; Automatically toggle Org mode LaTeX fragment previews as the cursor enters and exits them
+(use-package org-fragtog
+  :hook (org-mode . org-fragtog-mode))
 
 ;; Task management and agenda views
 ;; Store my org files in ~/documents/org, maintain an inbox in Dropbox, define the location of an index file (my main todo list), and archive finished tasks in ~/documents/org/archive.org
@@ -273,6 +284,22 @@
           (lambda ()
             (LaTeX-math-mode)
             (setq TeX-master t)))
+
+;; Use LuaTeX for LaTeX fragment previews
+;; Needs Emacs to support svg display
+(setq org-preview-latex-default-process 'luadvisvgm)  ;; luapdf2svg, lua2svg, imagemagick
+;; Export with LuaTeX -> dvisvgm
+(add-to-list 'org-preview-latex-process-alist
+               '(luadvisvgm :programs
+                            ("lualatex" "dvisvgm")
+                            :description "dvi > svg" :message "you need to install the programs: lualatex and dvisvgm." :image-input-type "dvi" :image-output-type "svg" :image-size-adjust
+                            (1.7 . 1.5)
+                            :latex-compiler
+                            ("lualatex --output-format dvi --shell-escape --interaction=nonstopmode --output-directory=%o %f")
+                            :image-converter
+                            ("dvisvgm %f -n -b min -c %S -o %O"))
+               )
+
 
 (provide 'init-org)
 
