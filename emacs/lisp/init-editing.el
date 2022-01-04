@@ -8,8 +8,9 @@
 ;; abbreviation
 (defalias 'yes-or-no-p 'y-or-n-p)
 ;; auto-saving
+(setq auto-save-default nil
+      auto-save-visited-interval 60)
 (auto-save-visited-mode 1)
-(setq auto-save-default nil)
 ;; backup
 (setq create-lockfiles nil)
 (setq make-backup-files t)
