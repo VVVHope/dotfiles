@@ -14,6 +14,7 @@ mingw-w64-clang-x86_64-qt6
 mingw-w64-clang-x86_64-texlive-full
 mingw-w64-clang-x86_64-vulkan-devel
 mingw-w64-clang-x86_64-postgresql
+mingw-w64-x86_64-graphviz
 pacman -S openbsd-netcat net-utils sys-utils
 
 
