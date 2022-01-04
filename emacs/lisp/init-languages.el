@@ -39,6 +39,15 @@
   (with-eval-after-load 'whitespace-cleanup-mode
     (add-to-list 'whitespace-cleanup-mode-ignore-modes 'markdown-mode)))
 
+;; DOT
+(use-package graphviz-dot-mode
+  :ensure t
+  :mode "\\.dot\\.gv\\'"
+  :config (setq graphviz-dot-indent-width 4)
+  :bind (:map graphviz-dot-mode-map
+              ("C-t C-p" . graphviz-dot-preview)
+			  ("C-t v" . graphviz-dot-view)))
+
 ;; xml
 (use-package nxml-mode
   :ensure nil
