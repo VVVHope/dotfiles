@@ -1,3 +1,5 @@
+#Requires AutoHotkey v2.0
+
 ; Key modify for ANSI layout keyboard
 ; Disalbe Layer key and all the combinations
 LCtrl::return
@@ -10,7 +12,13 @@ LCtrl::return
 ^!+LCtrl::return
 
 ; All layers
-Capslock::LControl
+*CapsLock:: {
+    Send("{Blind}{LCtrl DownR}")
+    SendSuppressedKeyUp("LCtrl")
+    KeyWait("CapsLock")
+    Send("{Blind}{LCtrl Up}")
+    return
+}
 `::Escape
 Escape::`
 \::Backspace
@@ -18,7 +26,7 @@ Backspace::\
 AppsKey::Insert
 
 ; Layer 2
-#If, GetKeyState("LCtrl", "P")
+#HotIf GetKeyState("LCtrl", "P")
 Tab::Capslock   ; make fn+Tab the Caps Lock
 1::F1
 2::F2
@@ -40,5 +48,18 @@ a::Home
 e::End
 w::PgUp
 s::PgDn
-q::Insert
 `::`
+#HotIf
+
+SendSuppressedKeyUp(key) {
+    ; AutoHotkey v1.1.26+ uses this arbitrary value to signal its own hook
+    ; to suppress the event.  This exists because the technique of sending
+    ; and suppressing a key is already used to prevent Alt from activating
+    ; the window menu in some specific cases.
+    static KEY_BLOCK_THIS := 0xFFC3D450
+    DllCall("keybd_event"
+        , "char", GetKeyVK(key)
+        , "char", GetKeySC(key)
+        , "uint", 0x2
+        , "uptr", KEY_BLOCK_THIS)
+}
