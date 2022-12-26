@@ -3,48 +3,33 @@
 ;;; Code:
 
 ;; Remove this to run with early version
-(let ((minver "27.2"))
+(let ((minver "28.1"))
   (when (version< emacs-version minver)
     (error "Emacs v%s or higher recommended" minver)))
 
-;; Deal with custom.el
+;; custom.el
 (add-to-list 'load-path (expand-file-name (concat user-emacs-directory "lisp")))
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 
-(require 'init-elpa)
-(require 'init-appearance)
-(require 'init-modeline)
-(require 'init-editing)
-(require 'init-tabbar)
-(require 'init-minibuffer)
-(require 'init-completion)
-(require 'init-file-management)
-(require 'init-projectile)
-(require 'init-org)
-(require 'init-vcs)
+(require 'package)
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 
-(require 'init-lsp)
-(require 'init-languages)
-(require 'init-web)
+;;; Initialize the packages, avoiding a re-initialization
+(unless (bound-and-true-p package--initialized) ;; To avoid warnings on 27
+  (setq package-enable-at-startup nil)
+  (package-initialize))
 
-;; Keymap
-(require 'init-user-input)
+(unless package-archive-contents
+  (package-refresh-contents))
+
+(unless (package-installed-p 'use-package)
+  (package-refresh-contents)
+  (package-install 'use-package))
+
+(org-babel-load-file "~/.config/emacs/configuration.org")
 
 (when (file-exists-p custom-file)
   (load-file custom-file))
-
-;; Settings for system encoding
-(prefer-coding-system 'utf-8)
-(setq locale-coding-system 'utf-8)
-(setq default-buffer-file-coding-system 'utf-8)
-(set-language-environment "UTF-8")
-(set-default-coding-systems 'utf-8)
-(set-buffer-file-coding-system 'utf-8)
-(set-clipboard-coding-system 'utf-8)
-(set-file-name-coding-system 'utf-8)
-(set-keyboard-coding-system 'utf-8)
-(set-terminal-coding-system 'utf-8)
-(set-selection-coding-system 'utf-8)
 
 (setq default-directory "~/projects/")
 (setq initial-major-mode 'org-mode)

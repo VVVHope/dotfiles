@@ -1,0 +1,1187 @@
+#+TITLE: Emacs Configuration
+#+AUTHOR: viayulo
+#+LANGUAGE: en
+#+OPTIONS: toc:nil num:nil
+#+STARTUP: overview inlineimages
+
+* Configure =use-package=
+#+begin_src emacs-lisp
+  (eval-when-compile
+    (require 'use-package))
+
+  (setq use-package-always-ensure t
+        use-package-always-defer t
+        use-package-always-demand nil
+        use-package-expand-minimally t
+        use-package-verbose t)
+
+  (use-package diminish)
+  (use-package bind-key)
+#+end_src
+
+Always compile packages, and use the newest version available.
+
+#+begin_src emacs-lisp
+  (use-package auto-compile
+    :config (auto-compile-on-load-mode))
+
+  (setq load-prefer-newer t)
+#+end_src
+
+Disable deprecation warnings about =cl=. The =cl= library has been deprecated, but
+lots of packages still use it. I can't control that, but I can disable the
+warnings.
+
+#+begin_src emacs-lisp
+  (setq byte-compile-warnings '(cl-functions))
+#+end_src
+
+* Appearance
+#+begin_src emacs-lisp
+  ;; GUI mode optimize
+  (defun optimize-ui ()
+    "Insert a newline below the current line and put point at beginning."
+    (set-frame-size (selected-frame) 180 56)
+    (setq-default scroll-up-aggressively 0.01
+                  scroll-down-aggressively 0.01)
+    (setq visible-bell 1
+          redisplay-dont-pause t
+          scroll-conservatively 100000
+          scroll-margin 0
+          scroll-step 1
+          scroll-preserve-screen-position 'always)
+    ;; default font
+    (set-face-attribute 'default nil
+                        :font "Fira Code")
+    ;; Chinese characters
+    (dolist (charset '(han cjk-misc chinese-gbk))
+      (set-fontset-font "fontset-default" charset
+                        (font-spec :family "WenQuanYi Micro Hei"))))
+
+  (when (display-graphic-p)
+    (optimize-ui))
+
+  ;; reload the fonts & screen layout when in Daemon mode
+  (add-hook 'after-make-frame-functions
+            (lambda (frame)
+              (select-frame frame)
+              (when (display-graphic-p frame)
+                (optimize-ui))))
+
+  ;; Don’t compact font caches during GC.
+  (setq inhibit-compacting-font-caches t)
+
+  ;; insignificant things
+  (setq inhibit-startup-screen t)
+  (setq initial-scratch-message nil)
+  (setq use-file-dialog nil
+        use-dialog-box nil)
+  ;; Set cursor-type
+  (setq-default cursor-type 'bar)
+  ;; display line numbers
+  (global-display-line-numbers-mode t)
+  (setq display-line-numbers-width-start t)
+  (setq-default display-line-numbers-widen t)
+  ;; display time
+  (display-time-mode 1)
+  (setq display-time-24hr-format t
+        display-time-day-and-date t)
+
+  ;; Basic modes
+  (save-place-mode 1)
+  (global-auto-revert-mode 1)
+  (column-number-mode 1)
+  (size-indication-mode t)
+  ;; (display-battery-mode 1)
+  (setq ring-bell-function 'ignore)
+
+  ;; colorize paired delimiters, optimized for dark theme
+  (use-package rainbow-delimiters
+    :hook (prog-mode . rainbow-delimiters-mode)
+    :config (custom-set-faces
+             '(rainbow-delimiters-depth-1-face ((t (:foreground "#ffffff"))))
+             '(rainbow-delimiters-depth-2-face ((t (:foreground "#ff62d4"))))
+             '(rainbow-delimiters-depth-3-face ((t (:foreground "#3fdfd0"))))
+             '(rainbow-delimiters-depth-4-face ((t (:foreground "#fba849"))))
+             '(rainbow-delimiters-depth-5-face ((t (:foreground "#9f80ff"))))
+             '(rainbow-delimiters-depth-6-face ((t (:foreground "#4fe42f"))))
+             '(rainbow-delimiters-depth-7-face ((t (:foreground "#fe6060"))))
+             '(rainbow-delimiters-depth-8-face ((t (:foreground "#4fafff"))))))
+
+  ;; display color
+  (use-package rainbow-mode
+    :hook (prog-mode . rainbow-mode))
+
+  ;; nyannyan
+  (use-package nyan-mode
+    :hook (after-init . nyan-mode)
+    :config (setq nyan-animate-nyancat t
+                  nyan-bar-length 17))
+
+  ;; theme
+  ;; (load-theme 'wombat t)
+  (use-package vscode-dark-plus-theme
+    :ensure t
+    :defer nil
+    :config ;; Remove the border around the TODO word on org-mode files
+            ;; (setq vscode-dark-plus-box-org-todo nil)
+            ;; Do not set different heights for some org faces
+            ;; (setq vscode-dark-plus-scale-org-faces nil)
+            ;; Avoid inverting hl-todo face
+            (setq vscode-dark-plus-invert-hl-todo nil)
+            (load-theme 'vscode-dark-plus t))
+    (custom-theme-set-faces
+      'vscode-dark-plus
+      '(org-level-1 ((t (:foreground "#4ec9b0" :bold nil :height 1.3))))
+      '(org-level-2 ((t (:foreground "#9cdcfe" :bold nil :height 1.2))))
+      '(org-level-3 ((t (:foreground "#569cd6" :bold nil :height 1.1))))
+      '(org-level-4 ((t (:foreground "#4ec9b0" :bold nil :height 1.0)))))
+  (use-package solaire-mode
+    :ensure t
+    :config
+    (solaire-global-mode +1))
+
+  ;; Highlight TODO and similar keywords in comments and strings
+  (use-package hl-todo
+    :ensure t
+    :config
+    (global-hl-todo-mode +1))
+
+  (use-package all-the-icons-dired
+    :diminish
+    :hook (dired-mode . all-the-icons-dired-mode))
+
+  (use-package so-long
+    :ensure nil
+    :hook (after-init . global-so-long-mode)
+    :config (setq so-long-threshold 400))
+#+end_src
+* Modeline
+#+begin_src emacs-lisp
+  (use-package doom-modeline
+    :defer nil
+    :config (doom-modeline-mode 1)
+            (setq doom-modeline-height 19)
+            (setq doom-modeline-bar-width 4)
+            (setq doom-modeline-buffer-file-name-style 'auto)
+            (setq doom-modeline-icon (display-graphic-p))
+            (setq doom-modeline-major-mode-icon t)
+            (setq doom-modeline-major-mode-color-icon t)
+            (setq doom-modeline-buffer-state-icon t)
+            (setq doom-modeline-buffer-modification-icon t)
+            (setq doom-modeline-unicode-fallback nil)
+            (setq doom-modeline-minor-modes nil)
+            (setq doom-modeline-enable-word-count nil)
+            (setq doom-modeline-buffer-encoding t)
+            (setq doom-modeline-indent-info nil)
+            (setq doom-modeline-checker-simple-format t)
+            (setq doom-modeline-number-limit 99)
+            (setq doom-modeline-vcs-max-length 12)
+            (setq doom-modeline-workspace-name t)
+            (setq doom-modeline-persp-name t)
+            (setq doom-modeline-display-default-persp-name nil)
+            (setq doom-modeline-persp-icon t)
+            (setq doom-modeline-lsp t)
+            ;; Whether display the modal state icon.
+            ;; Including `evil', `overwrite', `god', `ryo' and `xah-fly-keys', etc.
+            (setq doom-modeline-modal-icon t)
+            ;; Whether display the mu4e notifications. It requires `mu4e-alert' package.
+            (setq doom-modeline-mu4e nil)
+            ;; also enable the start of mu4e-alert
+            ;; (mu4e-alert-enable-mode-line-display)
+            ;; Whether display the gnus notifications.
+            (setq doom-modeline-gnus t)
+            ;; Wheter gnus should automatically be updated and how often (set to 0 or smaller than 0 to disable)
+            (setq doom-modeline-gnus-timer 2)
+            ;; Wheter groups should be excludede when gnus automatically being updated.
+            (setq doom-modeline-gnus-excluded-groups '("dummy.group"))
+            ;; Whether display the IRC notifications. It requires `circe' or `erc' package.
+            (setq doom-modeline-irc t)
+            ;; Function to stylize the irc buffer names.
+            (setq doom-modeline-irc-stylize 'identity)
+            ;; Whether display the environment version.
+            (setq doom-modeline-env-version t)
+            ;; Or for individual languages
+            (setq doom-modeline-env-enable-python t)
+            (setq doom-modeline-env-enable-ruby t)
+            (setq doom-modeline-env-enable-perl t)
+            (setq doom-modeline-env-enable-go t)
+            (setq doom-modeline-env-enable-elixir t)
+            (setq doom-modeline-env-enable-rust t)
+            ;; Change the executables to use for the language version string
+            (setq doom-modeline-env-python-executable "python") ; or `python-shell-interpreter'
+            (setq doom-modeline-env-ruby-executable "ruby")
+            (setq doom-modeline-env-perl-executable "perl")
+            (setq doom-modeline-env-go-executable "go")
+            (setq doom-modeline-env-elixir-executable "iex")
+            (setq doom-modeline-env-rust-executable "rustc")
+            ;; What to display as the version while a new one is being loaded
+            (setq doom-modeline-env-load-string "...")
+            ;; Hooks that run before/after the modeline version string is updated
+            (setq doom-modeline-before-update-env-hook nil)
+            (setq doom-modeline-after-update-env-hook nil))
+#+end_src
+* Editing
+#+begin_src emacs-lisp
+  ;; highlight line with the cursor, preserving background colors.
+  (global-hl-line-mode 1)
+  (set-face-attribute 'hl-line nil :inherit nil :background "#171717")
+  ;; abbreviation
+  (setq use-short-answers t)
+  ;; auto-saving
+  (setq auto-save-default nil
+        auto-save-visited-interval 60)
+  (auto-save-visited-mode 1)
+  ;; backup
+  (setq create-lockfiles nil)
+  (setq make-backup-files t)
+  (setq backup-directory-alist
+        `(("." . ,(concat user-emacs-directory "backups"))))
+  ;; parentheses
+  (setq blink-matching-paren t)
+  (setq-default show-paren-style 'mixed
+                show-paren-when-point-inside-paren t
+                show-paren-when-point-in-periphery t)
+  (show-paren-mode 1)
+  (electric-pair-mode 1)
+
+  (add-hook 'after-init-hook 'delete-selection-mode)
+  (setq sentence-end-double-space nil)
+  ;; indent
+  (setq-default tab-width 4
+                indent-tabs-mode nil)
+  (use-package highlight-indent-guides
+    :ensure t
+    :diminish
+    :hook (prog-mode . highlight-indent-guides-mode)
+    :config (setq highlight-indent-guides-method (if (display-graphic-p) 'bitmap 'column))
+            (setq highlight-indent-guides-responsive 'top))
+  ;; word wrap
+  (setq word-wrap-by-category t)
+  ;; better jumping
+  (use-package mwim
+    :ensure t
+    :defer nil)
+  (use-package subword
+    :config (global-subword-mode 1))
+  ;; CamelCase symbols as separate words
+  (use-package subword
+    :hook ((prog-mode minibuffer-setup) . subword-mode))
+  ;; whitespace
+  (setq show-trailing-whitespace t)
+  ;; cleanup whitespace only if it was initially clean
+  (use-package whitespace-cleanup-mode
+    :diminish
+    :hook (after-init . global-whitespace-cleanup-mode))
+
+  ;; blink curser after jump
+  (use-package beacon
+    :diminish
+    :hook (after-init . beacon-mode)
+    :config (setq beacon-color "#ff8c00"))
+
+  (use-package let-alist); easily let-bind values of an assoc-list by their names
+  (use-package flycheck
+    :diminish
+    :ensure t
+    :init (global-flycheck-mode)
+    :bind (:map flycheck-mode-map
+                ("C-t ! C-c" . flycheck-compile)
+                ("C-t ! C-w" . flycheck-copy-errors-as-kill)
+                ("C-t ! ?" . flycheck-describe-checker)
+                ("C-t ! C" . flycheck-clear)
+                ("C-t ! H" . display-local-help)
+                ("C-t ! V" . flycheck-version)
+                ("C-t ! c" . flycheck-buffer)
+                ("C-t ! e" . flycheck-explain-error-at-point)
+                ("C-t ! h" . flycheck-display-error-at-point)
+                ("C-t ! i" . flycheck-manual)
+                ("C-t ! l" . flycheck-list-errors)
+                ("C-t ! n" . flycheck-next-error)
+                ("C-t ! p" . flycheck-previous-error)
+                ("C-t ! s" . flycheck-select-checker)
+                ("C-t ! v" . flycheck-verify-setup)
+                ("C-t ! x" . flycheck-disable-checker)))
+
+  ;; for scroll-half-page
+  (require 'view)
+
+  ;; smooth scrolling over images
+  (use-package iscroll
+    :diminish
+    :hook (image-mode . iscroll-mode))
+#+end_src
+* Tabbar
+#+begin_src emacs-lisp
+  (use-package centaur-tabs
+    :demand
+    :hook (dired-mode . centaur-tabs-local-mode)
+    :config (centaur-tabs-mode t)
+            (centaur-tabs-headline-match)
+            (setq centaur-tabs-height 10
+                  centaur-tabs-set-icons t
+                  centaur-tabs-plain-icons nil
+                  centaur-tabs-gray-out-icons 'buffer
+                  centaur-tabs-set-bar 'left
+                  centaur-tabs-set-close-button nil
+                  centaur-tabs-set-modified-marker t)
+    :bind (:map centaur-tabs-mode-map
+            ("C-t u" . centaur-tabs-backward)
+            ("C-t o" . centaur-tabs-forward)))
+#+end_src
+* Minibuffer
+#+begin_src emacs-lisp
+  ;; fido
+  (add-hook 'after-init-hook 'fido-vertical-mode)
+  (setq completion-styles '(initials partial-completion flex)
+        completion-cycle-threshold 10
+        completion-auto-help nil)
+
+  ;; Enable richer annotations using the Marginalia package
+  (use-package marginalia
+    ;; Either bind `marginalia-cycle` globally or only in the minibuffer
+  ;;  :bind (:map minibuffer-local-map
+  ;;         ("M-A" . marginalia-cycle))
+    ;; The :init configuration is always executed (Not lazy!)
+    :init
+    ;; Must be in the :init section of use-package such that the mode gets
+    ;; enabled right away. Note that this forces loading the package.
+    (marginalia-mode))
+
+  (use-package ctrlf
+    :hook (after-init . ctrlf-mode))
+
+  (use-package which-key
+    :defer nil
+    :config (which-key-mode))
+#+end_src
+* Completion
+#+begin_src emacs-lisp
+  ;:bind :map company-active-map ("<tab>" . company-complete-common)
+  (use-package company
+    :diminish company-mode
+    :defines (company-dabbrev-ignore-case company-dabbrev-downcase)
+    :hook (after-init . global-company-mode)
+    :config (setq company-dabbrev-code-everywhere t
+                  company-dabbrev-code-modes t
+                  company-dabbrev-code-other-buffers 'all
+                  company-dabbrev-downcase nil
+                  company-dabbrev-ignore-case t
+                  company-dabbrev-other-buffers 'all
+                  company-require-match nil
+                  company-minimum-prefix-length 1
+                  company-show-numbers t
+                  company-tooltip-limit 20
+                  company-idle-delay 0
+                  company-echo-delay 0
+                  company-tooltip-offset-display 'scrollbar
+                  company-begin-commands '(self-insert-command))
+    (eval-after-load 'company
+      '(add-to-list 'company-backends
+                    '(company-abbrev company-yasnippet company-capf))))
+
+  ;; add some semantic icons to the company completion menu
+  (use-package company-box
+    :after company
+    :diminish
+    :hook (company-mode . company-box-mode))
+
+  ;; Better sorting and filtering
+  (use-package company-prescient
+    :init (company-prescient-mode 1))
+
+  ;; snippet
+  (use-package yasnippet
+    :diminish
+    :hook (after-init . yas-global-mode)
+    :config (setq yas-indent-line 'auto)
+            (use-package yasnippet-snippets
+              :after yasnippet
+              :diminish)
+            (use-package auto-yasnippet
+              :diminish
+              :bind (("C-n" . aya-open-line)
+                     ("H-w" . aya-create)
+                     ("H-y" . aya-expand))))
+#+end_src
+* File-management
+#+begin_src emacs-lisp
+  (require 'dired-x)
+  (use-package dired
+    :ensure nil
+    :bind (:map dired-mode-map
+            ("i" . dired-previous-line)
+            ("k" . dired-next-line)
+            ("j" . dired-jump)
+            ("l" . dired-find-file)))
+  ;; highlight uncommitted changes
+  (use-package diff-hl
+    :hook (((prog-mode vc-dir-mode) . diff-hl-mode)
+           (dired-mode . diff-hl-dired-mode)))
+  (use-package dired-hide-dotfiles
+    :bind (:map dired-mode-map
+            ("." . dired-hide-dotfiles-mode)))
+  ;; Colourful dired
+  (use-package diredfl
+    :init (diredfl-global-mode 1))
+
+  (setq dired-kill-when-opening-new-dired-buffer t)
+
+  (use-package treemacs
+    :commands (treemacs-follow-mode
+               treemacs-filewatch-mode
+               treemacs-fringe-indicator-mode
+               treemacs-git-mode)
+    :bind (([f8]        . treemacs)
+           ("M-0"       . treemacs-select-window)
+           ("C-x 1"     . treemacs-delete-other-windows)
+           ("C-x t 1"   . treemacs-delete-other-windows)
+           ("C-x t t"   . treemacs)
+           ("C-x t b"   . treemacs-bookmark)
+           ("C-x t C-t" . treemacs-find-file)
+           ("C-x t M-t" . treemacs-find-tag)
+           :map treemacs-mode-map
+           ([mouse-1]   . treemacs-single-click-expand-action)
+           ("i" . treemacs-previous-line)
+           ("k" . treemacs-next-line))
+    :config
+    (setq treemacs-collapse-dirs           (if treemacs-python-executable 3 0)
+          treemacs-missing-project-action  'remove
+          treemacs-sorting                 'alphabetic-asc
+          treemacs-follow-after-init       t
+          treemacs-width                   30)
+    (treemacs-load-all-the-icons-with-workaround-font "Hermit")
+    :config
+    (treemacs-follow-mode t)
+    (treemacs-filewatch-mode t)
+    (pcase (cons (not (null (executable-find "git")))
+                 (not (null (executable-find "python3"))))
+      (`(t . t)
+       (treemacs-git-mode 'deferred))
+      (`(t . _)
+       (treemacs-git-mode 'simple)))
+
+    (use-package treemacs-projectile
+      :after projectile
+      :bind (:map projectile-command-map
+             ("h" . treemacs-projectile)))
+
+    (use-package treemacs-magit
+      :after magit
+      :commands treemacs-magit--schedule-update
+      :hook ((magit-post-commit
+              git-commit-post-finish
+              magit-post-stage
+              magit-post-unstage)
+             . treemacs-magit--schedule-update))
+
+    (use-package treemacs-persp
+      :after persp-mode
+      :demand t
+      :functions treemacs-set-scope-type
+      :config (treemacs-set-scope-type 'Perspectives)))
+
+
+  (use-package treemacs-all-the-icons)
+#+end_src
+* Projectile
+#+begin_src emacs-lisp
+  (use-package ag)
+
+  (use-package projectile
+    :diminish projectile-mode
+    :hook (after-init . projectile-mode)
+    :bind(:map projectile-mode-map
+               ("C-p" . projectile-command-map))
+    :config
+      ;; move cache to ~/.emacs.d/.cache/ for gitignore
+      (setq projectile-cache-file (expand-file-name ".cache/projectile.cache" user-emacs-directory)))
+#+end_src
+* =Org-mode=
+#+begin_src emacs-lisp
+  (use-package org
+    :ensure org-contrib
+    :hook (org-mode . visual-line-mode)
+          (org-mode . org-indent-mode)
+    :config (setq org-log-done 'time)
+            (setq org-todo-keywords
+                (quote ((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d)")
+                        (sequence "WAITING(w@/!)" "HOLD(h@/!)" "|" "CANCELLED(c@/!)"))))
+            ;; I cannot set a headline to DONE if children aren’t DONE.
+            (setq-default org-enforce-todo-dependencies t)
+
+            (setq org-startup-indented t
+                  org-hide-emphasis-markers t
+                  org-pretty-entities t)
+            ;; Show linked images directly in my Org document
+            (setq org-startup-with-inline-images t org-image-actual-width '(600))
+            ;; Use syntax highlighting in source blocks while editing.
+            (setq org-src-fontify-natively t)
+            ;; Make TAB act as if it were issued in a buffer of the language’s major mode.
+            (setq org-src-tab-acts-natively t)
+            ;; When editing a code snippet, use the current window rather than popping open a new one (which shows the same information).
+            (setq org-src-window-setup 'current-window)
+    :bind (:map org-mode-map
+                ("C-t C-a" . org-attach)
+                ("C-t C-j" . org-backward-heading-same-level)
+                ("C-t C-t" . org-ctrl-c-ctrl-c)
+                ("C-t C-d" . org-deadline)
+                ("C-t C-e" . org-export-dispatch)
+                ("C-t C-l" . org-forward-heading-same-level)
+                ("C-t j" . org-goto)
+                ("C-t k" . org-kill-note-or-show-branches)
+                ("C-t l" . org-insert-link)
+                ("C-t C-o" . org-open-at-point)
+                ("C-t C-q" . org-set-tags-command)
+                ("C-t r" . org-reveal)
+                ("C-t C-s" . org-schedule)
+                ("C-t t" . org-todo)
+                ("C-t C-w" . org-refile)
+                ("C-t y" . org-evaluate-time-range)
+                ("C-t C-z" . org-add-note)
+                ("C-t C-^" . org-up-element)
+                ("C-t C-_" . org-down-element)
+                ("C-t C-*" . org-list-make-subtree)
+                ("C-t C-," . org-insert-structure-template)
+                ("C-t C-k" . outline-next-visible-heading) ;
+                ("C-t C-i" . outline-previous-visible-heading) ;
+                ("C-t C-u" . outline-up-heading)
+                ("C-t C-<" . outline-promote)
+                ("C-t C->" . outline-demote)
+                ("C-t M-j" . org-previous-block)
+                ("C-t M-l" . org-next-block)
+                ("C-t M-i" . org-insert-last-stored-link)
+                ("C-t C-c" . org-refile-copy)
+                ("C-t C-M-l" . org-insert-all-links)
+                ("C-t C-TAB" . org-force-cycle-archived)
+                ("C-t TAB" . org-ctrl-c-tab)
+                ("C-t SPC" . org-table-blank-field)
+                ("C-t RET" . org-ctrl-c-ret)
+                ("C-t a" . org-agenda)
+                ("C-t #" . org-update-statistics-cookies)
+                ("C-t $" . org-archive-subtree)
+                ("C-t %" . org-mark-ring-push)
+                ("C-t '" . org-edit-special)
+                ("C-t *" . org-ctrl-c-star)
+                ("C-t +" . org-table-sum)
+                ("C-t ," . org-priority)
+                ("C-t -" . org-ctrl-c-minus)
+                ("C-t ." . org-time-stamp)
+                ("C-t /" . org-sparse-tree)
+                ("C-t \;" . org-toggle-comment)
+                ("C-t <" . org-date-from-calendar)
+                ("C-t =" . org-table-eval-formula)
+                ("C-t >" . org-goto-calendar)
+                ("C-t ?" . org-table-field-info)
+                ("C-t @" . org-mark-subtree)
+                ("C-t [" . org-agenda-file-to-front)
+                ("C-t \\" . org-match-sparse-tree)
+                ("C-t \]" . org-remove-file)
+                ("C-t ^" . org-sort)
+                ("C-t `" . org-table-edit-field)
+                ("C-t {" . org-table-toggle-formula-debugger)
+                ("C-t |" . org-table-create-or-convert-from-region)
+                ("C-t }" . org-table-toggle-coordinate-overlays)
+                ("C-t ~" . org-table-create-with-table.el)
+                ("C-t C-y C-a" . org-babel-sha1-hash)
+                ("C-t C-y C-j" . org-babel-execute-buffer)
+                ("C-t C-y C-c" . org-babel-check-src-block)
+                ("C-t C-y C-d" . org-babel-demarcate-block)
+                ("C-t C-y C-e" . org-babel-execute-maybe)
+                ("C-t C-y C-l" . org-babel-tangle-file)
+                ("C-t C-y TAB" . org-babel-view-src-block-info)
+                ;("C-t C-y C-j" . org-babel-insert-header-arg)
+                ;("C-t C-y C-l" . org-babel-load-in-session)
+                ("C-t C-y C-k" . org-babel-next-src-block)
+                ("C-t C-y C-o" . org-babel-open-src-block-result)
+                ("C-t C-y C-i" . org-babel-previous-src-block)
+                ("C-t C-y C-r" . org-babel-goto-named-result)
+                ("C-t C-y C-s" . org-babel-execute-subtree)
+                ("C-t C-y C-t" . org-babel-tangle)
+                ("C-t C-y C-u" . org-babel-goto-src-block-head)
+                ("C-t C-y C-v" . org-babel-expand-src-block)
+                ("C-t C-y C-x" . org-babel-do-key-sequence-in-edit-buffer)
+                ("C-t C-y C-z" . org-babel-switch-to-session)
+                ("C-t C-y I" . org-babel-view-src-block-info)
+                ("C-t C-y a" . org-babel-sha1-hash)
+                ("C-t C-y b" . org-babel-execute-buffer)
+                ("C-t C-y c" . org-babel-check-src-block)
+                ("C-t C-y d" . org-babel-demarcate-block)
+                ("C-t C-y e" . org-babel-execute-maybe)
+                ("C-t C-y f" . org-babel-tangle-file)
+                ("C-t C-y g" . org-babel-goto-named-src-block)
+                ("C-t C-y h" . org-babel-describe-bindings)
+                ("C-t C-y i" . org-babel-lob-ingest)
+                ("C-t C-y j" . org-babel-insert-header-arg)
+                ("C-t C-y k" . org-babel-remove-result-one-or-many)
+                ("C-t C-y l" . org-babel-load-in-session)
+                ("C-t C-y n" . org-babel-next-src-block)
+                ("C-t C-y o" . org-babel-open-src-block-result)
+                ("C-t C-y p" . org-babel-previous-src-block)
+                ("C-t C-y r" . org-babel-goto-named-result)
+                ("C-t C-y s" . org-babel-execute-subtree)
+                ("C-t C-y t" . org-babel-tangle)
+                ("C-t C-y u" . org-babel-goto-src-block-head)
+                ("C-t C-y v" . org-babel-expand-src-block)
+                ("C-t C-y x" . org-babel-do-key-sequence-in-edit-buffer)
+                ("C-t C-y z" . org-babel-switch-to-session-with-code)
+                ("C-t C-y C-M-h" . org-babel-mark-block)
+                ("C-t C-x C-a" . org-archive-subtree-default)
+                ("C-t C-x C-b" . org-toggle-checkbox)
+                ;("C-t C-x C-c" . org-columns)
+                ("C-t C-x C-d" . org-clock-display)
+                ("C-t C-x C-f" . org-emphasize)
+                ("C-t C-x TAB" . org-clock-in)
+                ("C-t C-x C-j" . org-clock-goto)
+                ("C-t C-x C-l" . org-latex-preview)
+                ("C-t C-x C-n" . org-next-link)
+                ("C-t C-x C-o" . org-clock-out)
+                ("C-t C-x C-p" . org-previous-link)
+                ("C-t C-x C-q" . org-clock-cancel)
+                ("C-t C-x C-r" . org-toggle-radio-button)
+                ("C-t C-x C-s" . org-archive-subtree)
+                ("C-t C-x C-t" . org-toggle-time-stamp-overlays)
+                ("C-t C-x C-u" . org-dblock-update)
+                ("C-t C-x C-v" . org-toggle-inline-images)
+                ("C-t C-x M-c" . org-cut-special)
+                ("C-t C-x C-x" . org-clock-in-last)
+                ("C-t C-x C-y" . org-paste-special)
+                ("C-t C-x C-z" . org-resolve-clocks)
+                ("C-t C-x !" . org-reload)
+                ("C-t C-x ," . org-timer-pause-or-continue)
+                ("C-t C-x -" . org-timer-item)
+                ("C-t C-x ." . org-timer)
+                ("C-t C-x 0" . org-timer-start)
+                ("C-t C-x <" . org-agenda-set-restriction-lock)
+                ("C-t C-x >" . org-agenda-remove-restriction-lock)
+                ("C-t C-x A" . org-archive-to-archive-sibling)
+                ("C-t C-x E" . org-inc-effort)
+                ("C-t C-x G" . org-feed-goto-inbox)
+                ("C-t C-x I" . org-info-find-node)
+                ("C-t C-x P" . org-set-property-and-value)
+                ("C-t C-x [" . org-reftex-citation)
+                ("C-t C-x _" . org-timer-stop)
+                ("C-t C-x a" . org-toggle-archive-tag)
+                ("C-t C-x b" . org-tree-to-indirect-buffer)
+                ("C-t C-x c" . org-clone-subtree-with-time-shift)
+                ("C-t C-x d" . org-insert-drawer)
+                ("C-t C-x e" . org-set-effort)
+                ("C-t C-x f" . org-footnote-action)
+                ("C-t C-x g" . org-feed-update-all)
+                ("C-t C-x o" . org-toggle-ordered-property)
+                ("C-t C-x p" . org-set-property)
+                ("C-t C-x q" . org-toggle-tags-groups)
+                ("C-t C-x v" . org-copy-visible)
+                ("C-t C-x x" . org-dynamic-block-insert-dblock)
+                ("C-t C-x C-M-v" . org-redisplay-inline-images)
+                ("C-t C-x C-c" . org-copy-special)))
+
+  ;; special outline mark
+  (use-package org-superstar
+    :hook (org-mode . org-superstar-mode)
+    :config (setq org-superstar-special-todo-items t))
+
+  ;; toggle visibility of invisible Org elements depending on cursor position
+  (use-package org-appear
+    :hook (org-mode . org-appear-mode)
+    :config (setq org-appear-autolinks t
+                  org-appear-autosubmarkers t
+                  org-appear-autoentities t
+                  org-appear-autokeywords t))
+
+  ;; Prevent editing of text within collapsed subtree
+  (setq-default org-catch-invisible-edits 'smart)
+
+  ;; Automatically toggle Org mode LaTeX fragment previews as the cursor enters and exits them
+  (use-package org-fragtog
+    :hook (org-mode . org-fragtog-mode))
+
+  ;; Task management and agenda views
+  ;; Store my org files in ~/documents/org, maintain an inbox in Dropbox, define the location of an index file (my main todo list), and archive finished tasks in ~/documents/org/archive.org
+  (setq org-directory "~/Documents/org")
+  (defun org-file-path (filename)
+    "Return the absolute address of an org file, given its relative name."
+    (concat (file-name-as-directory org-directory) filename))
+
+  ;;(setq org-inbox-file "~/sync/Dropbox/inbox.org")
+  (setq org-inbox-file "~/Documents/inbox.org")
+  (setq org-index-file (org-file-path "index.org"))
+  (setq org-archive-location
+        (concat
+         (org-file-path (format "archive/archive-%s.org" (format-time-string "%Y")))
+         "::* From %s"))
+
+  (setq org-refile-targets `((,org-index-file :level . 1)
+                             (,(org-file-path "deliveries.org") :level . 1)
+                             (,(org-file-path "environment.org") :level . 1)
+                             (,(org-file-path "links.org") :level . 1)
+                             (,(org-file-path "media.org") :level . 1)
+                             (,(org-file-path "someday-maybe.org") :level . 1)
+                             (,(org-file-path "work.org") :level . 1)))
+
+
+  ;; Exporting
+  ;; Allow export to markdown and beamer (for presentations).
+  (require 'ox-md)
+  (require 'ox-beamer)
+  ;; Allow babel to evaluate code blocks in a handful of languages.
+  (use-package gnuplot)
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((ditaa . t)
+     (dot . t)
+     (emacs-lisp . t)
+     (python . t)
+     (gnuplot . t)
+     (ruby . t)
+     (shell . t)))
+  ;; Don’t ask before evaluating code blocks.
+  (setq org-confirm-babel-evaluate nil)
+  ;; Use htmlize to ensure that exported code blocks use syntax highlighting.
+  (use-package htmlize)
+  ;; Associate the “dot” language with the graphviz-dot major mode.
+  (use-package graphviz-dot-mode)
+  (add-to-list 'org-src-lang-modes '("dot" . graphviz-dot))
+  ;; Translate regular ol’ straight quotes to typographically correct curly quotes when exporting.
+  (setq org-export-with-smart-quotes t)
+  ;; Exporting to HTML
+  ;; Don’t include a footer with my contact and publishing information at the bottom of every exported HTML document.
+  (setq org-html-postamble nil)
+  ;; Exporting to PDF
+  ;; I want to produce PDFs with syntax highlighting in the code. The best way to do that seems to be with the minted package, but that package shells out to pygments to do the actual work. xelatex usually disallows shell commands; this enables that.
+  (setq org-latex-pdf-process
+        '("xelatex -shell-escape -interaction nonstopmode -output-directory %o %f"
+          "xelatex -shell-escape -interaction nonstopmode -output-directory %o %f"
+          "xelatex -shell-escape -interaction nonstopmode -output-directory %o %f"))
+  ;; Include the minted package in all of my LaTeX exports.
+  (add-to-list 'org-latex-packages-alist '("" "minted"))
+  (setq org-latex-listings 'minted)
+  ;; Remove the intermediate TeX file when exporting to PDF.
+  (add-to-list 'org-latex-logfiles-extensions "tex")
+  ;; I often want to export a book without “Part I”:
+  (add-to-list 'org-latex-classes
+             '("book-noparts"
+                "\\documentclass{book}"
+                ("\\chapter{%s}" . "\\chapter*{%s}")
+                ("\\section{%s}" . "\\section*{%s}")
+                ("\\subsection{%s}" . "\\subsection*{%s}")
+                ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+                ("\\paragraph{%s}" . "\\paragraph*{%s}")
+                ("\\subparagraph{%s}" . "\\subparagraph*{%s}")))
+
+  ;; TeX configuration
+  ;; I rarely write LaTeX directly any more, but I often export through it with org-mode, so I’m keeping them together.
+  ;; Automatically parse the file after loading it.
+  (setq TeX-parse-self t)
+  ;; Always use pdflatex when compiling LaTeX documents. I don’t really have any use for DVIs.
+  (setq TeX-PDF-mode t)
+  ;; Enable a minor mode for dealing with math (it adds a few useful keybindings), and always treat the current file as the “main” file. That’s intentional, since I’m usually actually in an org document.
+  (add-hook 'LaTeX-mode-hook
+            (lambda ()
+              (LaTeX-math-mode)
+              (setq TeX-master t)))
+
+  ;; Use LuaTeX for LaTeX fragment previews
+  ;; Needs Emacs to support svg display
+  (setq org-preview-latex-default-process 'luadvisvgm)  ;; luapdf2svg, lua2svg, imagemagick
+  ;; Export with LuaTeX -> dvisvgm
+  (add-to-list 'org-preview-latex-process-alist
+                 '(luadvisvgm :programs
+                              ("lualatex" "dvisvgm")
+                              :description "dvi > svg" :message "you need to install the programs: lualatex and dvisvgm." :image-input-type "dvi" :image-output-type "svg" :image-size-adjust
+                              (1.7 . 1.5)
+                              :latex-compiler
+                              ("lualatex --output-format dvi --shell-escape --interaction=nonstopmode --output-directory=%o %f")
+                              :image-converter
+                              ("dvisvgm %f -n -b min -c %S -o %O"))
+                 )
+#+end_src
+
+export images as embedded base64 data if the corresponding image file has a size not larger than =org-html-image-base64-max-size=
+
+#+begin_src emacs-lisp
+  (use-package org
+    :config
+    (defcustom org-html-image-base64-max-size #x40000
+      "Export embedded base64 encoded images up to this size."
+      :type 'number
+      :group 'org-export-html)
+
+    (defun file-to-base64-string (file &optional image prefix postfix)
+      "Transform binary file FILE into a base64-string prepending PREFIX and appending POSTFIX.
+    Puts \"data:image/%s;base64,\" with %s replaced by the image type before the actual image data if IMAGE is non-nil."
+      (concat prefix
+          (with-temp-buffer
+            (set-buffer-multibyte nil)
+            (insert-file-contents file nil nil nil t)
+            (base64-encode-region (point-min) (point-max) 'no-line-break)
+            (when image
+              (goto-char (point-min))
+              (insert (format "data:image/%s;base64," (image-type-from-file-name file))))
+            (buffer-string))
+          postfix))
+
+    (defun orgTZA-html-base64-encode-p (file)
+      "Check whether FILE should be exported base64-encoded.
+    The return value is actually FILE with \"file://\" removed if it is a prefix of FILE."
+      (when (and (stringp file)
+                 (string-match "\\`file://" file))
+        (setq file (substring file (match-end 0))))
+      (and
+       (file-readable-p file)
+       (let ((size (nth 7 (file-attributes file))))
+         (<= size org-html-image-base64-max-size))
+       file))
+
+    (defun orgTZA-html--format-image (source attributes info)
+      "Return \"img\" tag with given SOURCE and ATTRIBUTES.
+    SOURCE is a string specifying the location of the image.
+    ATTRIBUTES is a plist, as returned by
+    `org-export-read-attribute'.  INFO is a plist used as
+    a communication channel."
+      (if (string= "svg" (file-name-extension source))
+          (org-html--svg-image source attributes info)
+        (let* ((file (orgTZA-html-base64-encode-p source))
+               (data (if file (file-to-base64-string file t)
+                       source)))
+          (org-html-close-tag
+           "img"
+           (org-html--make-attribute-string
+            (org-combine-plists
+             (list :src data
+                   :alt (if (string-match-p "^ltxpng/" source)
+                            (org-html-encode-plain-text
+                              (org-find-text-property-in-string 'org-latex-src source))
+                            (file-name-nondirectory source)))
+             attributes))
+           info))))
+
+    (advice-add 'org-html--format-image :override #'orgTZA-html--format-image))
+#+end_src
+
+* Version Control
+#+begin_src emacs-lisp
+  (use-package magit
+    :bind ("C-x g" . magit-status)
+    :config (use-package with-editor)
+            ;(setq magit-push-always-verify nil)
+            (setq git-commit-summary-max-length 50))
+
+  (use-package git-timemachine)
+#+end_src
+* Language Server Protocol
+#+begin_src emacs-lisp
+  (use-package lsp-mode
+    :hook ((lsp-mode . (lambda ()
+                         (lsp-enable-which-key-integration)
+                         (add-hook 'before-save-hook #'lsp-organize-imports t t)
+                         (add-hook 'before-save-hook #'lsp-format-buffer t t)))
+           (prog-mode . (lambda() (unless (derived-mode-p 'emacs-lisp-mode 'lisp-mode 'graphviz-dot-mode)(lsp-deferred)))))
+    :commands (lsp lsp-deferred lsp-format-buffer lsp-organize-imports)
+    :config (setq lsp-keymap-prefix "C-t l")
+            (setq lsp-keep-workspace-alive nil ;; Auto kill LSP server
+                  lsp-enable-indentation nil
+                  lsp-enable-on-type-formatting t
+                  lsp-auto-guess-root t
+                  lsp-enable-snippet t
+                  lsp-prefer-flymake nil
+                  lsp-prefer-capf t
+                  lsp-modeline-diagnostics-enable t
+                  lsp-modeline-diagnostics-scope :workspace ;; workspace/global/file
+                  lsp-idle-delay 0.500
+                  read-process-output-max (* 1024 1024) ;; 1MB
+                  lsp-completion-provider :capf))
+
+  ;;; Optionally: lsp-ui, company-lsp
+  (use-package lsp-ui
+    :after lsp-mode
+    :commands lsp-ui-mode
+    :hook ((lsp-mode . lsp-ui-mode)
+           (lsp-ui-mode . lsp-modeline-code-actions-mode)
+           ;; (lsp-ui-mode . lsp-ui-peek-mode) ;; drop it 'cause it has BUGs
+           )
+    :config (setq lsp-ui-doc-enable t
+                lsp-ui-doc-use-webkit nil
+                lsp-ui-doc-delay .3
+                lsp-ui-doc-include-signature t
+                lsp-lens-enable t
+                lsp-ui-doc-position 'at-point ;; top/bottom/at-point
+                lsp-eldoc-enable-hover t ;; eldoc displays in minibuffer
+                lsp-ui-sideline-enable nil
+                lsp-ui-sideline-show-hover nil
+                lsp-ui-sideline-show-code-actions t
+                lsp-ui-sideline-show-diagnostics t
+                lsp-ui-sideline-ignore-duplicate t
+                lsp-modeline-code-actions-segments '(count name)
+                lsp-headerline-breadcrumb-enable nil)
+    (setq lsp-ui-flycheck-enable t)
+    (define-key lsp-ui-mode-map [remap xref-find-definitions] #'lsp-ui-peek-find-definitions)
+    (define-key lsp-ui-mode-map [remap xref-find-references] #'lsp-ui-peek-find-references))
+
+  (use-package lsp-treemacs
+    :commands lsp-treemacs-errors-list
+    :config
+    (when (display-graphic-p)
+      (treemacs-resize-icons 14)))
+
+  (use-package dap-mode
+    :diminish
+    :hook ((lsp-mode . dap-mode)
+           (dap-mode . dap-ui-mode)
+           (dap-mode . dap-tooltip-mode)
+           (python-mode . (lambda() (require 'dap-python)))))
+#+end_src
+* Languages
+** Spell check
+#+begin_src emacs-lisp
+  (setq ispell-program-name "aspell")
+  (setq ispell-extra-args '("--sug-mode=ultra" "--lang=en_US" "--camel-case"))
+  (setq ispell-personal-dictionary "~/.ispell_words")
+  (use-package flyspell
+    :demand t
+    :hook ((text-mode . flyspell-mode)
+           (prog-mode . flyspell-prog-mode)))
+  (use-package flyspell-correct
+    :after flyspell
+    :bind (:map flyspell-mode-map ("C-;" . flyspell-correct-wrapper)))
+#+end_src
+** rust
+#+begin_src emacs-lisp
+  (use-package rustic)
+
+  (use-package toml-mode
+    :mode "\\.toml\\'"
+    :config
+    (add-hook 'toml-mode-hook 'goto-address-prog-mode))
+#+end_src
+** python
+#+begin_src emacs-lisp
+  (setq-default python-indent-offset 4
+                python-indent-guess-indent-offset-verbose nil)
+#+end_src
+** json
+#+begin_src emacs-lisp
+  (use-package json-mode
+    :mode "\\.json\\'")
+#+end_src
+** markdown
+#+begin_src emacs-lisp
+  (use-package markdown-mode
+    :mode (("README\\.md\\'" . gfm-mode)
+           ("\\.md\\'" . markdown-mode)
+           ("\\.markdown\\'" . markdown-mode))
+    :init (setq markdown-command "multimarkdown")
+    :commands (markdown-mode gfm-mode)
+    :config
+      (with-eval-after-load 'whitespace-cleanup-mode
+        (add-to-list 'whitespace-cleanup-mode-ignore-modes 'markdown-mode))
+      (custom-set-faces '(markdown-pre-face ((t nil))))
+      (setq markdown-command "pandoc --standalone --mathjax --from=markdown"
+            markdown-disable-tooltip-prompt t
+            markdown-fontify-code-blocks-natively t))
+#+end_src
+** DOT
+#+begin_src emacs-lisp
+  (use-package graphviz-dot-mode
+    :ensure t
+    :mode "\\.dot\\.gv\\'"
+    :config (setq graphviz-dot-indent-width 4)
+    :bind (:map graphviz-dot-mode-map
+                ("C-t C-p" . graphviz-dot-preview)
+                ("C-t v" . graphviz-dot-view)))
+#+end_src
+** xml
+#+begin_src emacs-lisp
+  (use-package nxml-mode
+    :ensure nil
+    :mode "\\.xml\\.xsd\\.sch\\.rng\\.xslt\\.svg\\.rss\\.gpx\\.tcx\\.plist\\'"
+    :config (setq magic-mode-alist (cons '("<\\?xml " . nxml-mode) magic-mode-alist))
+            (fset 'xml-mode 'nxml-mode)
+            (setq nxml-slash-auto-complete-flag t))
+
+  ;; See: http://sinewalker.wordpress.com/2008/06/26/pretty-printing-xml-with-emacs-nxml-mode/
+  (defun sanityinc/pp-xml-region (beg end)
+    "Pretty format XML markup in region. The function inserts
+  linebreaks to separate tags that have nothing but whitespace
+  between them.  It then indents the markup by using nxml's
+  indentation rules."
+    (interactive "r")
+    (unless (use-region-p)
+      (setq beg (point-min)
+            end (point-max)))
+    ;; Use markers because our changes will move END
+    (setq beg (set-marker (make-marker) beg)
+          end (set-marker (make-marker) end))
+    (save-excursion
+      (goto-char beg)
+      (while (search-forward-regexp "\>[ \\t]*\<" end t)
+        (backward-char) (insert "\n"))
+      (nxml-mode)
+      (indent-region beg end)))
+
+  ;; Integration with tidy for html + xml
+
+  (defun sanityinc/tidy-buffer-xml (beg end)
+    "Run \"tidy -xml\" on the region from BEG to END, or whole buffer."
+    (interactive "r")
+    (unless (use-region-p)
+      (setq beg (point-min)
+            end (point-max)))
+    (shell-command-on-region beg end "tidy -xml -q -i" (current-buffer) t "*tidy-errors*" t))
+#+end_src
+* Web
+#+begin_src emacs-lisp
+  ; front-end
+  (use-package mmm-mode
+    :config (setq mmm-global-mode 'buffers-with-submode-classes)
+            (setq mmm-submode-decoration-level 2))
+#+end_src
+* Key Binding
+#+begin_src emacs-lisp
+  ;; Unbind <C-i> from the TAB key and bind it to indent-region.
+  ;; Since TAB and <C-i> cannot be differentiated in TTY emacs,
+  ;; the workaround is to conditionally bind TAB to indent-region
+  ;; when there is an active region selected.
+  (if (display-graphic-p)
+    ; IF we are not in a TTY, unbind C-i from TAB
+    (progn
+      (define-key input-decode-map [?\C-i] [C-i])
+      (global-set-key (kbd "<C-i>") 'previous-line)
+      (define-key input-decode-map [?\C-m] [C-m])
+      (global-set-key (kbd "<C-m>") 'previous-line))
+    ; ELSE IF we are in a TTY, create a replacement for TAB
+    (defun my/tab-replacement (&optional START END)
+      (interactive "r")
+      (if (use-region-p)
+        ; IF active region, use indent-region
+          (indent-region START END)
+        ; ELSE IF no active region, use default tab command
+        (indent-for-tab-command)))
+    ; Bind our quick-and-dirty TAB replacement to the TAB key
+    (global-set-key (kbd "TAB") 'my/tab-replacement))
+
+  ;; insert a newline
+  (defun open-line-above ()
+    "Insert a newline above the current line and put point at beginning."
+    (interactive)
+    (unless (bolp)
+      (beginning-of-line))
+    (newline)
+    (forward-line -1)
+    (indent-according-to-mode))
+  (defun open-line-below ()
+    "Insert a newline below the current line and put point at beginning."
+    (interactive)
+    (unless (eolp)
+      (end-of-line))
+    (newline-and-indent))
+
+  ;; (global-set-key (kbd "C-r") (lookup-key global-map (kbd "C-c")))
+
+  (bind-keys*
+    ("M-i" . previous-line); move around
+    ("C-j" . backward-char)
+    ("M-j" . backward-word)
+    ("C-k" . next-line)
+    ("M-k" . next-line)
+    ("C-l" . forward-char)
+    ("M-l" . forward-word)
+    ("M-u" . backward-sentence)
+    ("M-o" . forward-sentence)
+    ("C-a" . mwim-beginning-of-code-or-line)
+    ("C-e" . mwim-end-of-code-or-line)
+    ("<home>" . mwim-beginning-of-line-or-code)
+    ("<end>" . mwim-end-of-line-or-code)
+    ("M-I" . upcase-word); case convert
+    ("M-K" . downcase-word)
+    ("C-d" . kill-whole-line); kill/insert line
+    ("M-d" . kill-line)
+    ("C-n" . open-line-below)
+    ("M-n" . open-line-above)
+    ("M-w" . kill-sentence)
+    ("C-c" . kill-ring-save); cut/copy/paste
+    ("M-c" . kill-region)
+    ("C-v" . yank)
+    ("M-v" . yank-pop)
+    ("C-z" . undo)
+    ("C-w" . View-scroll-half-page-backward); scroll
+    ("C-s" . View-scroll-half-page-forward)
+    ("M-s" . recenter-top-bottom)
+    ("C-x w =" . enlarge-window); change frame
+    ("C-x w -" . shrink-window)
+    ("C-x w +" . enlarge-window-horizontally)
+    ("C-x w _" . shrink-window-horizontally)
+    ("C-x w i" . windmove-up)
+    ("C-x w j" . windmove-left)
+    ("C-x w k" . windmove-down)
+    ("C-x w l" . windmove-right)
+    ("C-f" . ctrlf-forward-default); packages
+    ("M-f" . ctrlf-backward-default))
+
+  (keyboard-translate ?\C-r ?\C-x); translate C-r to C-x
+  (keyboard-translate ?\C-x ?\M-c); translate C-x to cut
+
+  ; TODO C/M-w C/M-y C-m
+  ; prefix for git
+  ; C-/ (previously undo
+
+  ;; create prefix
+  (define-prefix-command 'my-prefix-map)
+  (global-set-key (kbd "C-t") 'my-prefix-map)
+  (define-prefix-command 'my-combo-prefix-map)
+  (global-set-key (kbd "C-t C-y") 'my-combo-prefix-map)
+
+  (bind-keys :map prog-mode-map
+             ("C-." . lsp-find-definition)
+             ("C-," . pop-tag-mark))
+
+  ;; global key-binding settings for comment
+  (global-set-key (kbd "C-x /") 'comment-line)
+  (global-set-key (kbd "C-x ?") 'comment-or-uncomment-region)
+
+  ;; mouse input
+  (global-unset-key (kbd "M-<down-mouse-1>"))
+  (global-set-key (kbd "M-<mouse-1>") 'mc/add-cursor-on-click)
+
+  (use-package hideshow
+    :bind (("C-x [". hs-hide-block)
+           ("C-x ]" . hs-show-block)))
+
+  ;; expand-region
+  (use-package expand-region
+    :bind (("C-=" . er/expand-region)
+           ("C--" . er/contract-region)))
+
+  ;; multiple-cursors
+  (use-package multiple-cursors
+    :bind ("C-\\" . mc/mark-next-like-this)
+    :config (define-key mc/keymap (kbd "<return>") nil);make <return> insert a newline, multiple-cursors-mode can still be disabled with C-g
+  )
+
+  ;; drag-stuff - move lines up/down
+  (use-package drag-stuff
+    :bind (("<M-up>". drag-stuff-up)
+           ("<M-down>" . drag-stuff-down)))
+
+  ;; C-x w #num to switch frame
+  (use-package winum
+    :hook (after-init . winum-mode))
+
+  ;; Display ugly ^L page breaks as tidy horizontal lines
+  (use-package page-break-lines
+    :diminish
+    :hook (after-init . global-page-break-lines-mode))
+
+  ;; For Windows, make both Windows keys emit ‘super’
+  ;; (may need a registry hack or use AutoHotKey to get rid of Windows’ interceptions)
+  (when (equal window-system 'w32)
+    (setq
+      w32-pass-lwindow-to-system nil
+      w32-lwindow-modifier 'super
+      w32-pass-rwindow-to-system nil
+      w32-rwindow-modifier 'super
+      w32-pass-apps-to-system nil
+      w32-apps-modifier 'hyper
+      w32-pass-alt-to-system nil
+      w32-scroll-lock-modifier nil))
+#+end_src
