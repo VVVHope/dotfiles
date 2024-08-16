@@ -3,7 +3,7 @@
 ;;; Code:
 
 ;; Remove this to run with early version
-(let ((minver "28.1"))
+(let ((minver "29.1"))
   (when (version< emacs-version minver)
     (error "Emacs v%s or higher recommended" minver)))
 

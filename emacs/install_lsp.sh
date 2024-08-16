@@ -11,3 +11,5 @@ sudo pip install 'python-lsp-server[all]'
 # C/C++
 sudo apt update
 sudo apt install llvm clangd
+
+fonts-font-awesome fonts-firacode fonts-symbola fonts-powerline fonts-material-design-icons-iconfont fonts-recommended

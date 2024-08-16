@@ -104,8 +104,10 @@ Backspace::Delete
 9::Numpad9
 0::Numpad0
 Enter::NumpadEnter
--::Volume_Down
-=::Volume_Up
+-::NumpadSub
+=::NumpadAdd
+x::NumpadMult
+/::NumpadDiv
 Backspace::Volume_Mute
 [::Media_Prev
 ]::Media_Next

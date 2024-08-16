@@ -5,6 +5,7 @@
 #+STARTUP: overview inlineimages
 
 * Configure =use-package=
+
 #+begin_src emacs-lisp
   (eval-when-compile
     (require 'use-package))
@@ -23,6 +24,7 @@ Always compile packages, and use the newest version available.
 
 #+begin_src emacs-lisp
   (use-package auto-compile
+    :demand t
     :config (auto-compile-on-load-mode))
 
   (setq load-prefer-newer t)
@@ -36,7 +38,41 @@ warnings.
   (setq byte-compile-warnings '(cl-functions))
 #+end_src
 
+Don’t pop up a buffer to warn me about deprecations and other minor issues.
+
+#+begin_src emacs-lisp
+  (setq warning-minimum-level :emergency)
+#+end_src
+
+* Automatically update Emacs packages
+
+#+begin_src emacs-lisp
+  (use-package auto-package-update
+    :custom
+    (auto-package-update-prompt-before-update t)
+    (auto-package-update-delete-old-versions t))
+#+end_src
+
+* Compatibility
+
+Platform-specific settings (uncomment to enable).
+
+** Linux on ChromeOS (Crostini)
+
+To use ChromeOS input methods in Crostini Emacs
+
+#+begin_src emacs-lisp
+  ;(setq x-gtk-use-native-input t)
+  ;; if you want to use CTRL+SPACE to switch input method.
+  ;(global-unset-key (kbd "C-SPC"))
+#+end_src
+
+and in =~/.bash_profile= put:
+
+~export GTK_IM_MODULE=cros~
+
 * Appearance
+
 #+begin_src emacs-lisp
   ;; GUI mode optimize
   (defun optimize-ui ()
@@ -92,6 +128,7 @@ warnings.
   (global-auto-revert-mode 1)
   (column-number-mode 1)
   (size-indication-mode t)
+  (winner-mode 1)  ;; allows you to “undo” and “redo” changes in WindowConfiguration
   ;; (display-battery-mode 1)
   (setq ring-bell-function 'ignore)
 
@@ -156,7 +193,9 @@ warnings.
     :hook (after-init . global-so-long-mode)
     :config (setq so-long-threshold 400))
 #+end_src
+
 * Modeline
+
 #+begin_src emacs-lisp
   (use-package doom-modeline
     :defer nil
@@ -221,7 +260,9 @@ warnings.
             (setq doom-modeline-before-update-env-hook nil)
             (setq doom-modeline-after-update-env-hook nil))
 #+end_src
+
 * Editing
+
 #+begin_src emacs-lisp
   ;; highlight line with the cursor, preserving background colors.
   (global-hl-line-mode 1)
@@ -311,7 +352,9 @@ warnings.
     :diminish
     :hook (image-mode . iscroll-mode))
 #+end_src
+
 * Tabbar
+
 #+begin_src emacs-lisp
   (use-package centaur-tabs
     :demand
@@ -329,7 +372,9 @@ warnings.
             ("C-t u" . centaur-tabs-backward)
             ("C-t o" . centaur-tabs-forward)))
 #+end_src
+
 * Minibuffer
+
 #+begin_src emacs-lisp
   ;; fido
   (add-hook 'after-init-hook 'fido-vertical-mode)
@@ -355,7 +400,9 @@ warnings.
     :defer nil
     :config (which-key-mode))
 #+end_src
+
 * Completion
+
 #+begin_src emacs-lisp
   ;:bind :map company-active-map ("<tab>" . company-complete-common)
   (use-package company
@@ -404,7 +451,9 @@ warnings.
                      ("H-w" . aya-create)
                      ("H-y" . aya-expand))))
 #+end_src
+
 * File-management
+
 #+begin_src emacs-lisp
   (require 'dired-x)
   (use-package dired
@@ -413,10 +462,11 @@ warnings.
             ("i" . dired-previous-line)
             ("k" . dired-next-line)
             ("j" . dired-jump)
-            ("l" . dired-find-file)))
+            ("l" . dired-find-file))
+    :config (setq dired-listing-switches "-alh"))
   ;; highlight uncommitted changes
   (use-package diff-hl
-    :hook (((prog-mode vc-dir-mode) . diff-hl-mode)
+    :hook (((prog-mode vc-dir-mode org-mode) . diff-hl-mode)
            (dired-mode . diff-hl-dired-mode)))
   (use-package dired-hide-dotfiles
     :bind (:map dired-mode-map
@@ -445,46 +495,47 @@ warnings.
            ("i" . treemacs-previous-line)
            ("k" . treemacs-next-line))
     :config
-    (setq treemacs-collapse-dirs           (if treemacs-python-executable 3 0)
-          treemacs-missing-project-action  'remove
-          treemacs-sorting                 'alphabetic-asc
-          treemacs-follow-after-init       t
-          treemacs-width                   30)
-    (treemacs-load-all-the-icons-with-workaround-font "Hermit")
-    :config
-    (treemacs-follow-mode t)
-    (treemacs-filewatch-mode t)
-    (pcase (cons (not (null (executable-find "git")))
-                 (not (null (executable-find "python3"))))
-      (`(t . t)
-       (treemacs-git-mode 'deferred))
-      (`(t . _)
-       (treemacs-git-mode 'simple)))
+      (setq treemacs-collapse-dirs           (if treemacs-python-executable 3 0)
+            treemacs-missing-project-action  'remove
+            treemacs-sorting                 'alphabetic-asc
+            treemacs-follow-after-init       t
+            treemacs-width                   30)
+      (treemacs-load-all-the-icons-with-workaround-font "Hermit")
+      :config
+      (treemacs-follow-mode t)
+      (treemacs-filewatch-mode t)
+      (pcase (cons (not (null (executable-find "git")))
+                   (not (null (executable-find "python3"))))
+        (`(t . t)
+         (treemacs-git-mode 'deferred))
+        (`(t . _)
+         (treemacs-git-mode 'simple)))
 
-    (use-package treemacs-projectile
-      :after projectile
-      :bind (:map projectile-command-map
-             ("h" . treemacs-projectile)))
+      (use-package treemacs-projectile
+        :after projectile
+        :bind (:map projectile-command-map
+               ("h" . treemacs-projectile)))
 
-    (use-package treemacs-magit
-      :after magit
-      :commands treemacs-magit--schedule-update
-      :hook ((magit-post-commit
-              git-commit-post-finish
-              magit-post-stage
-              magit-post-unstage)
-             . treemacs-magit--schedule-update))
+      (use-package treemacs-magit
+        :after magit
+        :commands treemacs-magit--schedule-update
+        :hook ((magit-post-commit
+                git-commit-post-finish
+                magit-post-stage
+                magit-post-unstage)
+               . treemacs-magit--schedule-update))
 
-    (use-package treemacs-persp
-      :after persp-mode
-      :demand t
-      :functions treemacs-set-scope-type
-      :config (treemacs-set-scope-type 'Perspectives)))
-
+      (use-package treemacs-persp
+        :after persp-mode
+        :demand t
+        :functions treemacs-set-scope-type
+        :config (treemacs-set-scope-type 'Perspectives)))
 
   (use-package treemacs-all-the-icons)
 #+end_src
+
 * Projectile
+
 #+begin_src emacs-lisp
   (use-package ag)
 
@@ -497,7 +548,9 @@ warnings.
       ;; move cache to ~/.emacs.d/.cache/ for gitignore
       (setq projectile-cache-file (expand-file-name ".cache/projectile.cache" user-emacs-directory)))
 #+end_src
+
 * =Org-mode=
+
 #+begin_src emacs-lisp
   (use-package org
     :ensure org-contrib
@@ -696,6 +749,10 @@ warnings.
   (use-package org-fragtog
     :hook (org-mode . org-fragtog-mode))
 
+  ;; Plays animated GIF or PNG inline in Org buffers
+  (use-package org-inline-anim
+    :hook (org-mode . org-inline-anim-mode))
+
   ;; Task management and agenda views
   ;; Store my org files in ~/documents/org, maintain an inbox in Dropbox, define the location of an index file (my main todo list), and archive finished tasks in ~/documents/org/archive.org
   (setq org-directory "~/Documents/org")
@@ -800,66 +857,67 @@ warnings.
 export images as embedded base64 data if the corresponding image file has a size not larger than =org-html-image-base64-max-size=
 
 #+begin_src emacs-lisp
-  (use-package org
-    :config
-    (defcustom org-html-image-base64-max-size #x40000
-      "Export embedded base64 encoded images up to this size."
-      :type 'number
-      :group 'org-export-html)
-
-    (defun file-to-base64-string (file &optional image prefix postfix)
-      "Transform binary file FILE into a base64-string prepending PREFIX and appending POSTFIX.
-    Puts \"data:image/%s;base64,\" with %s replaced by the image type before the actual image data if IMAGE is non-nil."
-      (concat prefix
-          (with-temp-buffer
-            (set-buffer-multibyte nil)
-            (insert-file-contents file nil nil nil t)
-            (base64-encode-region (point-min) (point-max) 'no-line-break)
-            (when image
-              (goto-char (point-min))
-              (insert (format "data:image/%s;base64," (image-type-from-file-name file))))
-            (buffer-string))
-          postfix))
-
-    (defun orgTZA-html-base64-encode-p (file)
-      "Check whether FILE should be exported base64-encoded.
-    The return value is actually FILE with \"file://\" removed if it is a prefix of FILE."
-      (when (and (stringp file)
-                 (string-match "\\`file://" file))
-        (setq file (substring file (match-end 0))))
-      (and
-       (file-readable-p file)
-       (let ((size (nth 7 (file-attributes file))))
-         (<= size org-html-image-base64-max-size))
-       file))
-
-    (defun orgTZA-html--format-image (source attributes info)
-      "Return \"img\" tag with given SOURCE and ATTRIBUTES.
-    SOURCE is a string specifying the location of the image.
-    ATTRIBUTES is a plist, as returned by
-    `org-export-read-attribute'.  INFO is a plist used as
-    a communication channel."
-      (if (string= "svg" (file-name-extension source))
-          (org-html--svg-image source attributes info)
-        (let* ((file (orgTZA-html-base64-encode-p source))
-               (data (if file (file-to-base64-string file t)
-                       source)))
-          (org-html-close-tag
-           "img"
-           (org-html--make-attribute-string
-            (org-combine-plists
-             (list :src data
-                   :alt (if (string-match-p "^ltxpng/" source)
-                            (org-html-encode-plain-text
-                              (org-find-text-property-in-string 'org-latex-src source))
-                            (file-name-nondirectory source)))
-             attributes))
-           info))))
-
-    (advice-add 'org-html--format-image :override #'orgTZA-html--format-image))
+  ;;(use-package org
+  ;;  :config
+  ;;  (defcustom org-html-image-base64-max-size #x40000
+  ;;    "Export embedded base64 encoded images up to this size."
+  ;;    :type 'number
+  ;;    :group 'org-export-html)
+  ;;
+  ;;  (defun file-to-base64-string (file &optional image prefix postfix)
+  ;;    "Transform binary file FILE into a base64-string prepending PREFIX and appending POSTFIX.
+  ;;  Puts \"data:image/%s;base64,\" with %s replaced by the image type before the actual image data if IMAGE is non-nil."
+  ;;    (concat prefix
+  ;;        (with-temp-buffer
+  ;;          (set-buffer-multibyte nil)
+  ;;          (insert-file-contents file nil nil nil t)
+  ;;          (base64-encode-region (point-min) (point-max) 'no-line-break)
+  ;;          (when image
+  ;;            (goto-char (point-min))
+  ;;            (insert (format "data:image/%s;base64," (image-type-from-file-name file))))
+  ;;          (buffer-string))
+  ;;        postfix))
+  ;;
+  ;;  (defun orgTZA-html-base64-encode-p (file)
+  ;;    "Check whether FILE should be exported base64-encoded.
+  ;;  The return value is actually FILE with \"file://\" removed if it is a prefix of FILE."
+  ;;    (when (and (stringp file)
+  ;;               (string-match "\\`file://" file))
+  ;;      (setq file (substring file (match-end 0))))
+  ;;    (and
+  ;;     (file-readable-p file)
+  ;;     (let ((size (nth 7 (file-attributes file))))
+  ;;       (<= size org-html-image-base64-max-size))
+  ;;     file))
+  ;;
+  ;;  (defun orgTZA-html--format-image (source attributes info)
+  ;;    "Return \"img\" tag with given SOURCE and ATTRIBUTES.
+  ;;  SOURCE is a string specifying the location of the image.
+  ;;  ATTRIBUTES is a plist, as returned by
+  ;;  `org-export-read-attribute'.  INFO is a plist used as
+  ;;  a communication channel."
+  ;;    (if (string= "svg" (file-name-extension source))
+  ;;        (org-html--svg-image source attributes info)
+  ;;      (let* ((file (orgTZA-html-base64-encode-p source))
+  ;;             (data (if file (file-to-base64-string file t)
+  ;;                     source)))
+  ;;        (org-html-close-tag
+  ;;         "img"
+  ;;         (org-html--make-attribute-string
+  ;;          (org-combine-plists
+  ;;           (list :src data
+  ;;                 :alt (if (string-match-p "^ltxpng/" source)
+  ;;                          (org-html-encode-plain-text
+  ;;                            (org-find-text-property-in-string 'org-latex-src source))
+  ;;                          (file-name-nondirectory source)))
+  ;;           attributes))
+  ;;         info))))
+  ;;
+  ;;  (advice-add 'org-html--format-image :override #'orgTZA-html--format-image))
 #+end_src
 
-* Version Control
+* Revision Control System
+
 #+begin_src emacs-lisp
   (use-package magit
     :bind ("C-x g" . magit-status)
@@ -869,7 +927,9 @@ export images as embedded base64 data if the corresponding image file has a size
 
   (use-package git-timemachine)
 #+end_src
+
 * Language Server Protocol
+
 #+begin_src emacs-lisp
   (use-package lsp-mode
     :hook ((lsp-mode . (lambda ()
@@ -931,40 +991,78 @@ export images as embedded base64 data if the corresponding image file has a size
            (dap-mode . dap-tooltip-mode)
            (python-mode . (lambda() (require 'dap-python)))))
 #+end_src
-* Languages
-** Spell check
-#+begin_src emacs-lisp
-  (setq ispell-program-name "aspell")
-  (setq ispell-extra-args '("--sug-mode=ultra" "--lang=en_US" "--camel-case"))
-  (setq ispell-personal-dictionary "~/.ispell_words")
-  (use-package flyspell
-    :demand t
-    :hook ((text-mode . flyspell-mode)
-           (prog-mode . flyspell-prog-mode)))
-  (use-package flyspell-correct
-    :after flyspell
-    :bind (:map flyspell-mode-map ("C-;" . flyspell-correct-wrapper)))
-#+end_src
-** rust
-#+begin_src emacs-lisp
-  (use-package rustic)
 
-  (use-package toml-mode
-    :mode "\\.toml\\'"
+* Languages
+
+** Spell check
+
+#+begin_src emacs-lisp
+  ;; use build-in flyspell with apell backend.
+  ;(setq ispell-program-name "aspell")
+  ;(setq ispell-extra-args '("--sug-mode=ultra" "--lang=en_US" "--camel-case"))
+  ;(setq ispell-personal-dictionary "~/.ispell_words")
+  ;(use-package flyspell
+  ;  :demand t
+  ;  :hook ((text-mode . flyspell-mode)
+  ;         (prog-mode . flyspell-prog-mode)))
+  ;(use-package flyspell-correct
+  ;  :after flyspell
+  ;  :bind (:map flyspell-mode-map ("C-;" . flyspell-correct-wrapper)))
+#+end_src
+
+#+begin_src emacs-lisp
+  (use-package jinx
+    :demand t
+    :hook (emacs-startup . global-jinx-mode)
+    :bind (("C-;" . jinx-correct)
+           ("C-M-;" . jinx-languages))
+    :custom (jinx-languages "en")
+    :config (add-to-list 'jinx-exclude-regexps '(t "\\cc")))
+#+end_src
+
+** Tree-sitter
+
+Tree-sitter is a parser generator tool and an incremental parsing library.
+
+#+begin_src emacs-lisp
+  (use-package treesit-auto
+    :demand t
+    :custom
+    (treesit-auto-install 'prompt)
+    (treesit-font-lock-level 4)
     :config
-    (add-hook 'toml-mode-hook 'goto-address-prog-mode))
+    (treesit-auto-add-to-auto-mode-alist 'all)
+    (global-treesit-auto-mode))
 #+end_src
-** python
+
+** Rust
+
 #+begin_src emacs-lisp
-  (setq-default python-indent-offset 4
-                python-indent-guess-indent-offset-verbose nil)
+  (use-package rust-ts-mode
+    :mode "\\.rs\\'"
+    :interpreter "rust"
+    :hook (rust-ts-mode . lsp)
+    :custom (rust-format-on-save t))
+
+  (use-package toml-ts-mode
+    :mode "\\.toml\\'"
+    :interpreter "toml"
+    :hook (toml-ts-mode . goto-address-prog-mode))
 #+end_src
-** json
+
+** Python
+
 #+begin_src emacs-lisp
-  (use-package json-mode
-    :mode "\\.json\\'")
+  (use-package python
+    :mode ("\\.py\\'" . python-mode)
+    :interpreter ("python" . python-mode)
+    :config
+    (setq-default python-indent-offset 4
+                  python-indent-guess-indent-offset-verbose nil))
 #+end_src
-** markdown
+
+** Markdown
+
 #+begin_src emacs-lisp
   (use-package markdown-mode
     :mode (("README\\.md\\'" . gfm-mode)
@@ -980,7 +1078,9 @@ export images as embedded base64 data if the corresponding image file has a size
             markdown-disable-tooltip-prompt t
             markdown-fontify-code-blocks-natively t))
 #+end_src
+
 ** DOT
+
 #+begin_src emacs-lisp
   (use-package graphviz-dot-mode
     :ensure t
@@ -990,7 +1090,9 @@ export images as embedded base64 data if the corresponding image file has a size
                 ("C-t C-p" . graphviz-dot-preview)
                 ("C-t v" . graphviz-dot-view)))
 #+end_src
+
 ** xml
+
 #+begin_src emacs-lisp
   (use-package nxml-mode
     :ensure nil
@@ -1029,14 +1131,18 @@ export images as embedded base64 data if the corresponding image file has a size
             end (point-max)))
     (shell-command-on-region beg end "tidy -xml -q -i" (current-buffer) t "*tidy-errors*" t))
 #+end_src
+
 * Web
+
 #+begin_src emacs-lisp
   ; front-end
   (use-package mmm-mode
     :config (setq mmm-global-mode 'buffers-with-submode-classes)
             (setq mmm-submode-decoration-level 2))
 #+end_src
+
 * Key Binding
+
 #+begin_src emacs-lisp
   ;; Unbind <C-i> from the TAB key and bind it to indent-region.
   ;; Since TAB and <C-i> cannot be differentiated in TTY emacs,
