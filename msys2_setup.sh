@@ -2,13 +2,14 @@ pacman -Suy --noconfirm
 
 pacman -S --noconfirm mingw-w64-clang-x86_64-gnupg
 pacman -S --noconfirm mingw-w64-clang-x86_64-emacs
-pacman -S --noconfirm mingw-w64-clang-x86_64-graphviz
 pacman -S --noconfirm mingw-w64-clang-x86_64-git-lfs
+pacman -S --noconfirm mingw-w64-clang-x86_64-graphviz
+pacman -S --noconfirm mingw-w64-clang-x86_64-ripgrep
+pacman -S --noconfirm mingw-w64-clang-x86_64-delta
+pacman -S --noconfirm mingw-w64-clang-x86_64-bat
 pacman -S --noconfirm mingw-w64-clang-x86_64-ffmpeg
 pacman -S --noconfirm mingw-w64-clang-x86_64-mpv
 #pacman -S --noconfirm mingw-w64-clang-x86_64-pkgconf
-pacman -S --noconfirm mingw-w64-clang-x86_64-openocd
-pacman -S --noconfirm mingw-w64-clang-x86_64-gdb-multiarch
 pacman -S --noconfirm mingw-w64-clang-x86_64-autotools
 pacman -S --noconfirm mingw-w64-clang-x86_64-openssl
 pacman -S --noconfirm mingw-w64-clang-x86_64-python
@@ -19,8 +20,11 @@ pacman -S --noconfirm mingw-w64-clang-x86_64-python-ujson
 pacman -S --noconfirm mingw-w64-clang-x86_64-openxr-sdk
 pacman -S --noconfirm mingw-w64-clang-x86_64-android-tools
 
-# spell checker
+# embedded dev
+pacman -S --noconfirm mingw-w64-clang-x86_64-openocd
+pacman -S --noconfirm mingw-w64-clang-x86_64-gdb-multiarch
 
+# spell checker
 pacman -S --noconfirm mingw-w64-clang-x86_64-enchant
 pacman -S --noconfirm mingw-w64-clang-x86_64-aspell
 pacman -S --noconfirm mingw-w64-clang-x86_64-aspell-en
