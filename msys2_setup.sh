@@ -4,9 +4,6 @@ pacman -S --noconfirm mingw-w64-clang-x86_64-gnupg
 pacman -S --noconfirm mingw-w64-clang-x86_64-emacs
 pacman -S --noconfirm mingw-w64-clang-x86_64-git-lfs
 pacman -S --noconfirm mingw-w64-clang-x86_64-graphviz
-pacman -S --noconfirm mingw-w64-clang-x86_64-ripgrep
-pacman -S --noconfirm mingw-w64-clang-x86_64-delta
-pacman -S --noconfirm mingw-w64-clang-x86_64-bat
 pacman -S --noconfirm mingw-w64-clang-x86_64-ffmpeg
 pacman -S --noconfirm mingw-w64-clang-x86_64-mpv
 #pacman -S --noconfirm mingw-w64-clang-x86_64-pkgconf
@@ -19,6 +16,13 @@ pacman -S --noconfirm mingw-w64-clang-x86_64-python-setuptools
 pacman -S --noconfirm mingw-w64-clang-x86_64-python-ujson
 pacman -S --noconfirm mingw-w64-clang-x86_64-openxr-sdk
 pacman -S --noconfirm mingw-w64-clang-x86_64-android-tools
+
+# Rust alternative utils
+pacman -S --noconfirm mingw-w64-clang-x86_64-ripgrep # grep
+pacman -S --noconfirm mingw-w64-clang-x86_64-fd # find
+pacman -S --noconfirm mingw-w64-clang-x86_64-sd # sed
+pacman -S --noconfirm mingw-w64-clang-x86_64-delta # git pager
+pacman -S --noconfirm mingw-w64-clang-x86_64-bat # cat
 
 # embedded dev
 pacman -S --noconfirm mingw-w64-clang-x86_64-openocd
