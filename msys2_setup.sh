@@ -2,10 +2,12 @@ pacman -Suy --noconfirm
 
 pacman -S --noconfirm mingw-w64-clang-x86_64-gnupg
 pacman -S --noconfirm mingw-w64-clang-x86_64-emacs
+pacman -S --noconfirm mingw-w64-clang-x86_64-libtree-sitter
 pacman -S --noconfirm mingw-w64-clang-x86_64-git-lfs
 pacman -S --noconfirm mingw-w64-clang-x86_64-graphviz
 pacman -S --noconfirm mingw-w64-clang-x86_64-ffmpeg
 pacman -S --noconfirm mingw-w64-clang-x86_64-mpv
+pacman -S --noconfirm mingw-w64-clang-x86_64-mkvtoolnix-gui
 #pacman -S --noconfirm mingw-w64-clang-x86_64-pkgconf
 pacman -S --noconfirm mingw-w64-clang-x86_64-autotools
 pacman -S --noconfirm mingw-w64-clang-x86_64-openssl
@@ -51,6 +53,10 @@ pacman -S --noconfirm mingw-w64-clang-x86_64-inkscape
 pacman -S --noconfirm mingw-w64-clang-x86_64-ruby
 pacman -S --noconfirm mingw-w64-clang-x86_64-ruby-native-package-installer
 
+# NeoVim & NvChad
+pacman -S --noconfirm mingw-w64-clang-x86_64-neovim
+git clone https://github.com/NvChad/starter ~/.config/nvim && nvim
+
 #openbsd-netcat
 #net-utils
 #sys-utils
@@ -58,5 +64,3 @@ pacman -S --noconfirm mingw-w64-clang-x86_64-ruby-native-package-installer
 #mingw-w64-clang-x86_64-postgresql
 
 #pacman -Qe
-
-
