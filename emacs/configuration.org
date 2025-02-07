@@ -40,7 +40,14 @@
 
 Platform-specific settings (uncomment to enable).
 
-** Mobile Device with Battery
+** System Preference
+
+Touch screen
+
+#+begin_src emacs-lisp
+#+end_src
+
+Device has battery
 
 #+begin_src emacs-lisp
 ;;(display-battery-mode 1)
@@ -76,6 +83,60 @@ To use ChromeOS input methods (IME) in Crostini Emacs
 and in =~/.bash_profile= put:
 
 ~export GTK_IM_MODULE=cros~
+
+** Android
+
+#+begin_quote
+You can get Emacs binaries for Android from SourceForge, the other source might involve compatibility problem.
+#+end_quote
+
+To use Emacs GUI and linux utils on Android, you can use native Emacs app with Emacs in termux, and share the same config via soft link.
+
+#+begin_quote
+The idea is to use =sharedUserId= manifest attribute in both packages to share the same Android user, so the packages can access both data folders.
+
+However, both Emacs and Termux packages need to be signed with the *same* certificate, so we need to resign Termux with our own certificate, build Emacs with the same certificate and =sharedUserId= of Termux (in =res/values/strings.xml=).
+
+You could also find prebuilt packages online, install Termux *first*, then install Emacs.
+#+end_quote
+
+To establish soft link, run this command under =.emacs.d=
+
+in eshell run:
+
+~ln -s /storage/emulated/0/init.el ./init.el~
+
+#+begin_quote
+Another solution is use termux desktop add-on like termux-x11.
+#+end_quote
+
+#+begin_src emacs-lisp
+;;(when (string-equal system-type "android")
+;;  ;; Add Termux binaries to PATH environment
+;;  (let ((termuxpath "/data/data/com.termux/files/usr/bin"))
+;;    (setenv "PATH" (concat (getenv "PATH") ":" termuxpath))
+;;    (setq exec-path (append exec-path (list termuxpath)))))
+
+;; Enable modifier key (Ctrl, etc.) bar
+;;(modifier-bar-mode 1)
+
+;; Use volume up as CTRL
+;;(define-key key-translation-map (kbd “<volume-up>”) [control])
+
+;; Use volume down as tab
+;;(define-key key-translation-map (kbd “<volume-down>”) (kbd “TAB”))
+
+;; Use back button as Escape
+;;(define-key key-translation-map (kbd "<XF86Back>") [escape])
+
+;; Camera key and shutter key
+;;(define-key key-translation-map (kbd "<KEYCODE_CAMERA>") [control])
+;;(define-key key-translation-map (kbd "<KEYCODE_FOCUS>") [control])
+#+end_src
+
+#+begin_quote
+To install fonts for Emacs on Android, put ttf/otf fonts under =~/fonts= (/data/data/org.gnu.emacs/files/fonts)
+#+end_quote
 
 * Configure =use-package=
 
@@ -131,7 +192,7 @@ Don’t pop up a buffer to warn me about deprecations and other minor issues.
 #+begin_src emacs-lisp
 ;; GUI mode optimize
 (defun optimize-ui ()
-  "Insert a newline below the current line and put point at beginning."
+  "Optimize GUI related variables."
   (set-frame-size (selected-frame) 180 56)
   ;; don't accelerate scrolling
   (setq mouse-wheel-progressive-speed nil)
@@ -142,22 +203,26 @@ Don’t pop up a buffer to warn me about deprecations and other minor issues.
   (defun font-installed-p (font-name)
     "Check if font with FONT-NAME is available."
     (find-font (font-spec :name font-name)))
-  ;; Default font
-  (cl-loop for font in '("FiraCode Nerd Font" "Fira Code" "IBM Plex Mono")
+  ;; Default font and size
+  (cl-loop for font in '("FiraCode Nerd Font" "Fira Code" "IBM Plex Mono 11")
            when (font-installed-p font)
-           return (set-frame-font "FiraCode Nerd Font" nil t))
+           return (set-frame-font (concat font " 12") nil t))
+  ;; fixed-pitch font
   (cl-loop for font in '("FiraMono Nerd Font" "Fira Mono" "IBM Plex Mono")
            when (font-installed-p font)
            return (set-face-attribute 'fixed-pitch nil
                                       :family font))
+  ;; fixed-pitch serif font
   (cl-loop for font in '("IBM Plex Serif")
            when (font-installed-p font)
            return (set-face-attribute 'fixed-pitch-serif nil
                                       :family font))
+  ;; variable-pitch font
   (cl-loop for font in '("IBM Plex Sans" "DejaVu Serif" "LXGW WenKai")
            when (font-installed-p font)
            return (set-face-attribute 'variable-pitch nil
                                       :family font))
+  ;; font for org-table
   (cl-loop for font in '("Sarasa Mono SC")
            when (font-installed-p font)
            return (set-face-attribute 'org-table nil
@@ -183,6 +248,7 @@ Don’t pop up a buffer to warn me about deprecations and other minor issues.
 
 ;; Support ligatures
 (use-package composite
+  :ensure nil
   :hook (prog-mode . auto-composition-mode)
   :init (global-auto-composition-mode -1)
   :config
@@ -278,18 +344,18 @@ Don’t pop up a buffer to warn me about deprecations and other minor issues.
 ;; allows you to “undo” and “redo” changes in WindowConfiguration (i.e., how the frames are partitioned into windows)
 (winner-mode 1)
 
-;; colorize paired delimiters, optimized for dark theme
+;; colorize paired delimiters, optimized for dark theme.
 (use-package rainbow-delimiters
   :hook ((prog-mode conf-mode yaml-mode) . rainbow-delimiters-mode)
-  :config (custom-set-faces
-           '(rainbow-delimiters-depth-1-face ((t (:foreground "#ffffff"))))
-           '(rainbow-delimiters-depth-2-face ((t (:foreground "#ff62d4"))))
-           '(rainbow-delimiters-depth-3-face ((t (:foreground "#3fdfd0"))))
-           '(rainbow-delimiters-depth-4-face ((t (:foreground "#fba849"))))
-           '(rainbow-delimiters-depth-5-face ((t (:foreground "#9f80ff"))))
-           '(rainbow-delimiters-depth-6-face ((t (:foreground "#4fe42f"))))
-           '(rainbow-delimiters-depth-7-face ((t (:foreground "#fe6060"))))
-           '(rainbow-delimiters-depth-8-face ((t (:foreground "#4fafff"))))))
+  :custom-face
+  (rainbow-delimiters-depth-1-face ((t (:foreground "#ffffff"))))
+  (rainbow-delimiters-depth-2-face ((t (:foreground "#ff62d4"))))
+  (rainbow-delimiters-depth-3-face ((t (:foreground "#3fdfd0"))))
+  (rainbow-delimiters-depth-4-face ((t (:foreground "#fba849"))))
+  (rainbow-delimiters-depth-5-face ((t (:foreground "#9f80ff"))))
+  (rainbow-delimiters-depth-6-face ((t (:foreground "#4fe42f"))))
+  (rainbow-delimiters-depth-7-face ((t (:foreground "#fe6060"))))
+  (rainbow-delimiters-depth-8-face ((t (:foreground "#4fafff")))))
 
 ;; colorize color names in buffers
 (use-package colorful-mode
@@ -298,30 +364,44 @@ Don’t pop up a buffer to warn me about deprecations and other minor issues.
   (setq colorful-use-prefix t))
 
 ;; nyannyan
-(use-package nyan-mode
-  :hook (after-init . nyan-mode)
-  :custom
-  (nyan-animate-nyancat t)
-  (nyan-bar-length 13))
+;;(use-package nyan-mode
+;;  :hook (after-init . nyan-mode)
+;;  :custom
+;;  (nyan-animate-nyancat t)
+;;  (nyan-bar-length 13))
 
 ;; theme
 ;; (load-theme 'wombat t)
+;; (use-package gruvbox-theme
+;;   :ensure t
+;;   :defer nil
+;;   :config (load-theme 'gruvbox-dark-hard t))
 (use-package vscode-dark-plus-theme
   :ensure t
   :defer nil
-  :config ;; Remove the border around the TODO word on org-mode files
-          ;; (setq vscode-dark-plus-box-org-todo nil)
-          ;; Do not set different heights for some org faces
-          ;; (setq vscode-dark-plus-scale-org-faces nil)
-          ;; Avoid inverting hl-todo face
-          (setq vscode-dark-plus-invert-hl-todo nil)
-          (load-theme 'vscode-dark-plus t))
+  :custom
+  ;; Remove the border around the TODO word on org-mode files
+  (vscode-dark-plus-box-org-todo nil)
+  ;; Do not set different heights for some org faces
+  ;; (vscode-dark-plus-scale-org-faces nil)
+  ;; Avoid inverting hl-todo face
+  (vscode-dark-plus-invert-hl-todo nil)
+  ;; Configure current line highlighting style:
+  ;; gutter (up and down lines for current line number)
+  ;; line (up and down lines for current line in hl-mode)
+  ;; all (Gutter and Line)
+  ;; default (lighter background color for current line)
+  (vscode-dark-plus-render-line-highlight 'line)
+  :config
+  (load-theme 'vscode-dark-plus t)
   (custom-theme-set-faces
     'vscode-dark-plus
-    '(org-level-1 ((t (:foreground "#4ec9b0" :bold nil :height 1.3))))
-    '(org-level-2 ((t (:foreground "#9cdcfe" :bold nil :height 1.2))))
-    '(org-level-3 ((t (:foreground "#569cd6" :bold nil :height 1.1))))
-    '(org-level-4 ((t (:foreground "#4ec9b0" :bold nil :height 1.0)))))
+    '(org-level-1 ((t (:foreground "#4ec9b0" :bold nil :height 1.15))))
+    '(org-level-2 ((t (:foreground "#9cdcfe" :bold nil :height 1.1))))
+    '(org-level-3 ((t (:foreground "#569cd6" :bold nil :height 1.05))))
+    '(org-level-4 ((t (:foreground "#4ec9b0" :bold nil :height 1.0))))
+    '(highlight ((t (:background "#264f78")))))
+  (enable-theme 'vscode-dark-plus))
 
 ;; slightly lighter background to distinguish buffers
 (use-package solaire-mode
@@ -387,69 +467,31 @@ Don’t pop up a buffer to warn me about deprecations and other minor issues.
 
 * Modeline
 
+I moved modeline to header line.
+
 #+begin_src emacs-lisp
-(use-package doom-modeline
-  :defer nil
-  :config (doom-modeline-mode 1)
-          (setq doom-modeline-height 19)
-          (setq doom-modeline-bar-width 4)
-          (setq doom-modeline-buffer-file-name-style 'auto)
-          (setq doom-modeline-icon (display-graphic-p))
-          (setq doom-modeline-major-mode-icon t)
-          (setq doom-modeline-major-mode-color-icon t)
-          (setq doom-modeline-buffer-state-icon t)
-          (setq doom-modeline-buffer-modification-icon t)
-          (setq doom-modeline-unicode-fallback nil)
-          (setq doom-modeline-minor-modes nil)
-          (setq doom-modeline-enable-word-count nil)
-          (setq doom-modeline-buffer-encoding t)
-          (setq doom-modeline-indent-info nil)
-          (setq doom-modeline-checker-simple-format t)
-          (setq doom-modeline-number-limit 99)
-          (setq doom-modeline-vcs-max-length 12)
-          (setq doom-modeline-workspace-name t)
-          (setq doom-modeline-persp-name t)
-          (setq doom-modeline-display-default-persp-name nil)
-          (setq doom-modeline-persp-icon t)
-          (setq doom-modeline-lsp t)
-          ;; Whether display the modal state icon.
-          ;; Including `evil', `overwrite', `god', `ryo' and `xah-fly-keys', etc.
-          (setq doom-modeline-modal-icon t)
-          ;; Whether display the mu4e notifications. It requires `mu4e-alert' package.
-          (setq doom-modeline-mu4e nil)
-          ;; also enable the start of mu4e-alert
-          ;; (mu4e-alert-enable-mode-line-display)
-          ;; Whether display the gnus notifications.
-          (setq doom-modeline-gnus t)
-          ;; Wheter gnus should automatically be updated and how often (set to 0 or smaller than 0 to disable)
-          (setq doom-modeline-gnus-timer 2)
-          ;; Wheter groups should be excludede when gnus automatically being updated.
-          (setq doom-modeline-gnus-excluded-groups '("dummy.group"))
-          ;; Whether display the IRC notifications. It requires `circe' or `erc' package.
-          (setq doom-modeline-irc t)
-          ;; Function to stylize the irc buffer names.
-          (setq doom-modeline-irc-stylize 'identity)
-          ;; Whether display the environment version.
-          (setq doom-modeline-env-version t)
-          ;; Or for individual languages
-          (setq doom-modeline-env-enable-python t)
-          (setq doom-modeline-env-enable-ruby t)
-          (setq doom-modeline-env-enable-perl t)
-          (setq doom-modeline-env-enable-go t)
-          (setq doom-modeline-env-enable-elixir t)
-          (setq doom-modeline-env-enable-rust t)
-          ;; Change the executables to use for the language version string
-          (setq doom-modeline-env-python-executable "python") ; or `python-shell-interpreter'
-          (setq doom-modeline-env-ruby-executable "ruby")
-          (setq doom-modeline-env-perl-executable "perl")
-          (setq doom-modeline-env-go-executable "go")
-          (setq doom-modeline-env-elixir-executable "iex")
-          (setq doom-modeline-env-rust-executable "rustc")
-          ;; What to display as the version while a new one is being loaded
-          (setq doom-modeline-env-load-string "...")
-          ;; Hooks that run before/after the modeline version string is updated
-          (setq doom-modeline-before-update-env-hook nil)
-          (setq doom-modeline-after-update-env-hook nil))
+(use-package nano-modeline
+  :init (nano-modeline-text-mode t)
+  :hook
+  ((prog-mode . nano-modeline-prog-mode)
+   (text-mode . nano-modeline-text-mode)
+   (org-mode . nano-modeline-org-mode)
+   (pdf-view-mode . nano-modeline-pdf-mode)
+   (mu4e-headers-mode . nano-modeline-mu4e-headers-mode)
+   (mu4e-view-mode . nano-modeline-mu4e-message-mode)
+   (elfeed-show-mode . nano-modeline-elfeed-entry-mode)
+   (elfeed-search-mode . nano-modeline-elfeed-search-mode)
+   (term-mode . nano-modeline-term-mode)
+   (xwidget-webkit-mode . nano-modeline-xwidget-mode)
+   (messages-buffer-mode-hook nano-modeline-message-mode)
+   (org-capture-mode . nano-modeline-org-capture-mode)
+   (org-agenda-mode . nano-modeline-org-agenda-mode)))
+#+end_src
+
+#+begin_src emacs-lisp
+;(use-package awesome-tray
+;  :vc (:url "https://github.com/manateelazycat/awesome-tray")
+;  :init (awesome-tray-mode t))
 #+end_src
 
 * Editing
@@ -457,9 +499,7 @@ Don’t pop up a buffer to warn me about deprecations and other minor issues.
 #+begin_src emacs-lisp
 ;; highlight line with the cursor, preserving background colors.
 (use-package hl-line
-  :hook (after-init . global-hl-line-mode)
-  :config
-  (set-face-attribute 'hl-line nil :inherit nil :background "#171717"))
+  :hook (after-init . global-hl-line-mode))
 
 ;; abbreviation
 (setq use-short-answers t)
@@ -502,6 +542,11 @@ Don’t pop up a buffer to warn me about deprecations and other minor issues.
 (setq-default tab-width 4
               indent-tabs-mode nil)
 
+;; Support EditorConfig for coding styles
+(use-package editorconfig
+  :ensure nil
+  :config (editorconfig-mode t))
+
 ;; indentation guide-bars
 ;; indent-bars requires Emacs :stipple support to display fancy guide bars (Most do, but some do not.)
 (use-package indent-bars
@@ -533,7 +578,7 @@ Don’t pop up a buffer to warn me about deprecations and other minor issues.
 
 ;; CamelCase symbols as separate words
 (use-package subword
-  :hook ((prog-mode minibuffer-setup) . subword-mode))
+  :hook (after-init . global-subword-mode))
 
 ;; whitespace
 (setq show-trailing-whitespace t)
@@ -575,24 +620,65 @@ Don’t pop up a buffer to warn me about deprecations and other minor issues.
 (require 'view)
 #+end_src
 
-* Tabbar
+* Sidebar
+
+I perfer sidebar to tabber, especially in a wide display.
 
 #+begin_src emacs-lisp
-(use-package centaur-tabs
-  :demand
-  :hook (dired-mode . centaur-tabs-local-mode)
-  :config (centaur-tabs-mode t)
-          (centaur-tabs-headline-match)
-          (setq centaur-tabs-height 10
-                centaur-tabs-set-icons t
-                centaur-tabs-plain-icons nil
-                centaur-tabs-gray-out-icons 'buffer
-                centaur-tabs-set-bar 'left
-                centaur-tabs-set-close-button nil
-                centaur-tabs-set-modified-marker t)
-  :bind (:map centaur-tabs-mode-map
-          ("C-t u" . centaur-tabs-backward)
-          ("C-t o" . centaur-tabs-forward)))
+(use-package treemacs
+  :ensure t
+  :defer t
+  :commands (treemacs-follow-mode
+             treemacs-filewatch-mode
+             treemacs-fringe-indicator-mode
+             treemacs-git-mode)
+  :bind (([f8]        . treemacs)
+         ("M-0"       . treemacs-select-window)
+         ("C-x 1"     . treemacs-delete-other-windows)
+         ("C-x t 1"   . treemacs-delete-other-windows)
+         ("C-x t t"   . treemacs)
+         ("C-x t b"   . treemacs-bookmark)
+         ("C-x t C-t" . treemacs-find-file)
+         ("C-x t M-t" . treemacs-find-tag)
+         :map treemacs-mode-map
+         ([mouse-1]   . treemacs-single-click-expand-action)
+         ("i" . treemacs-previous-line)
+         ("k" . treemacs-next-line))
+  :config
+    (setq treemacs-collapse-dirs           (if treemacs-python-executable 3 0)
+          treemacs-missing-project-action  'remove
+          treemacs-sorting                 'alphabetic-asc
+          treemacs-follow-after-init       t
+          treemacs-width                   30)
+    :config
+    (treemacs-follow-mode t)
+    (treemacs-filewatch-mode t)
+    (pcase (cons (not (null (executable-find "git")))
+                 (not (null (executable-find "python3"))))
+      (`(t . t)
+       (treemacs-git-mode 'deferred))
+      (`(t . _)
+       (treemacs-git-mode 'simple)))
+
+    (use-package treemacs-magit
+      :after magit
+      :commands treemacs-magit--schedule-update
+      :hook ((magit-post-commit
+              git-commit-post-finish
+              magit-post-stage
+              magit-post-unstage)
+             . treemacs-magit--schedule-update))
+
+    (use-package treemacs-persp
+      :after persp-mode
+      :demand t
+      :functions treemacs-set-scope-type
+      :config (treemacs-set-scope-type 'Perspectives)))
+
+;(use-package treemacs-tab-bar ;;treemacs-tab-bar if you use tab-bar-mode
+;  :after (treemacs)
+;  :demand t
+;  :config (treemacs-set-scope-type 'Tabs))
 #+end_src
 
 * Minibuffer
@@ -600,7 +686,66 @@ Don’t pop up a buffer to warn me about deprecations and other minor issues.
 #+begin_src emacs-lisp
 ;; Minibuffer VERTical Interactive COmpletion
 (use-package vertico
-  :init (vertico-mode))
+  :init (vertico-mode)
+  :custom
+  ;; Automatically shrink to match candidate list height.
+  (vertico-resize t)
+  (vertico-grid-separator "       ")
+  (vertico-grid-lookahead 50)
+  ;; Use different forms for different command.
+  (vertico-multiform-categories
+   '((file reverse)
+     (consult-grep buffer)
+     (consult-location)
+     (imenu buffer)
+     (library reverse indexed)
+     (org-roam-node reverse indexed)
+     (t reverse (:not posframe))))
+  (vertico-multiform-commands
+   '(("jinx-correct-*" grid reverse)
+     (org-refile grid reverse indexed)
+     (consult-line posframe
+      (vertico-posframe-poshandler . posframe-poshandler-frame-top-center))
+     (consult-buffer posframe)
+     (consult-yank-pop indexed)
+     (consult-flymake)
+     (consult-lsp-diagnostics)))
+  :config
+  ;; Prefix the current candidate with “» “.
+  ;; https://github.com/minad/vertico/wiki#prefix-current-candidate-with-arrow
+  (defvar +vertico-current-arrow t)
+  (cl-defmethod vertico--format-candidate :around
+    (cand prefix suffix index start &context ((and +vertico-current-arrow
+                                                   (not (bound-and-true-p vertico-flat-mode)))
+                                              (eql t)))
+    (setq cand (cl-call-next-method cand prefix suffix index start))
+    (if (bound-and-true-p vertico-grid-mode)
+        (if (= vertico--index index)
+            (concat #("▶" 0 1 (face vertico-current)) cand)
+          (concat #("_" 0 1 (display " ")) cand))
+      (if (= vertico--index index)
+          (concat
+           #(" " 0 1 (display (left-fringe right-triangle vertico-current)))
+           cand)
+        cand)))
+
+  ;; Extensions
+  (vertico-multiform-mode)
+
+  ;; Use posframe in some commands.
+  (use-package vertico-posframe
+    :after vertico
+    :custom
+    (vertico-posframe-parameters
+     '((left-fringe . 8)
+       (right-fringe . 8)))
+    (vertico-posframe-border-width 2)
+    ;; NOTE: This is useful when emacs is used in both in X and
+    ;; terminal, for posframe do not work well in terminal, so
+    ;; vertico-buffer-mode will be used as fallback at the
+    ;; moment.
+    (vertico-posframe-fallback-mode #'vertico-buffer-mode)
+    (vertico-posframe-poshandler #'posframe-poshandler-frame-center)))
 
 ;; Configure directory extension.
 (use-package vertico-directory
@@ -653,6 +798,7 @@ Don’t pop up a buffer to warn me about deprecations and other minor issues.
 
 ;; Enable rich annotations using the Marginalia package
 (use-package marginalia
+  :after vertico
   ;; Bind `marginalia-cycle' locally in the minibuffer.  To make the binding
   ;; available in the *Completions* buffer, add it to the
   ;; `completion-list-mode-map'.
@@ -664,7 +810,10 @@ Don’t pop up a buffer to warn me about deprecations and other minor issues.
   ;; Marginalia must be activated in the :init section of use-package such that
   ;; the mode gets enabled right away. Note that this forces loading the
   ;; package.
-  (marginalia-mode))
+  (marginalia-mode)
+  :custom
+  ;; Always show absolute time in file age annotations.
+  (marginalia-max-relative-age 0))
 
 ;; search and navigation
 (use-package consult
@@ -676,6 +825,7 @@ Don’t pop up a buffer to warn me about deprecations and other minor issues.
 ;; Use faster file search tool fd
 (when (executable-find "fd")
   (use-package consult-fd
+    :ensure nil
     :bind ("C-x f" . consult-fd)))
 
 ;; displays the possible key bindings of following your currently entered incomplete command
@@ -850,59 +1000,6 @@ I use =corfu= as UI for completion-at-point, it can get completions emacs-standa
   :init (diredfl-global-mode 1))
 
 (setq dired-kill-when-opening-new-dired-buffer t)
-
-(use-package treemacs
-  :commands (treemacs-follow-mode
-             treemacs-filewatch-mode
-             treemacs-fringe-indicator-mode
-             treemacs-git-mode)
-  :bind (([f8]        . treemacs)
-         ("M-0"       . treemacs-select-window)
-         ("C-x 1"     . treemacs-delete-other-windows)
-         ("C-x t 1"   . treemacs-delete-other-windows)
-         ("C-x t t"   . treemacs)
-         ("C-x t b"   . treemacs-bookmark)
-         ("C-x t C-t" . treemacs-find-file)
-         ("C-x t M-t" . treemacs-find-tag)
-         :map treemacs-mode-map
-         ([mouse-1]   . treemacs-single-click-expand-action)
-         ("i" . treemacs-previous-line)
-         ("k" . treemacs-next-line))
-  :config
-    (setq treemacs-collapse-dirs           (if treemacs-python-executable 3 0)
-          treemacs-missing-project-action  'remove
-          treemacs-sorting                 'alphabetic-asc
-          treemacs-follow-after-init       t
-          treemacs-width                   30)
-    :config
-    (treemacs-follow-mode t)
-    (treemacs-filewatch-mode t)
-    (pcase (cons (not (null (executable-find "git")))
-                 (not (null (executable-find "python3"))))
-      (`(t . t)
-       (treemacs-git-mode 'deferred))
-      (`(t . _)
-       (treemacs-git-mode 'simple)))
-
-    (use-package treemacs-magit
-      :after magit
-      :commands treemacs-magit--schedule-update
-      :hook ((magit-post-commit
-              git-commit-post-finish
-              magit-post-stage
-              magit-post-unstage)
-             . treemacs-magit--schedule-update))
-
-    (use-package treemacs-persp
-      :after persp-mode
-      :demand t
-      :functions treemacs-set-scope-type
-      :config (treemacs-set-scope-type 'Perspectives)))
-
-(use-package treemacs-tab-bar ;;treemacs-tab-bar if you use tab-bar-mode
-  :after (treemacs)
-  :demand t
-  :config (treemacs-set-scope-type 'Tabs))
 #+end_src
 
 * Project Interaction
@@ -926,8 +1023,9 @@ I use =corfu= as UI for completion-at-point, it can get completions emacs-standa
   :init (setq rg-show-columns t)
   :config (add-to-list 'rg-custom-type-aliases '("tmpl" . "*.tmpl")))
 
-;; mass editing of grep results
-;; allows you to edit a grep buffer and apply those changes to the file buffer like sed interactively
+;; mass editing of grep results.
+;; allows you to edit a grep buffer and apply those changes to the file buffer like sed interactively.
+;; hint: "e"(wgrep-change-to-wgrep-mode) under grep buffer, "M-%"(query-replace) enter text then use y(es)/n(o)/!(all) to replace.
 (use-package wgrep
   :init
   (setq wgrep-auto-save-buffer t
@@ -1116,6 +1214,12 @@ I use =corfu= as UI for completion-at-point, it can get completions emacs-standa
               ("C-t C-x C-M-v" . org-redisplay-inline-images)
               ("C-t C-x C-c" . org-copy-special)))
 
+(use-package org-agenda
+  :demand t
+  :ensure nil
+  :custom
+  (org-deadline-warning-days 0))
+
 ;; special outline mark
 (use-package org-superstar
   :hook (org-mode . org-superstar-mode)
@@ -1178,7 +1282,8 @@ I use =corfu= as UI for completion-at-point, it can get completions emacs-standa
    (python . t)
    (gnuplot . t)
    (ruby . t)
-   (shell . t)))
+   (shell . t)
+   (octave . t)))
 ;; Don’t ask before evaluating code blocks.
 (setq org-confirm-babel-evaluate nil)
 ;; Use htmlize to ensure that exported code blocks use syntax highlighting.
@@ -1639,6 +1744,51 @@ indentation rules."
 
 ;; (global-set-key (kbd "C-r") (lookup-key global-map (kbd "C-c")))
 
+;; Copy/cut only current line if no selection, and don't move the cursor.
+;; Use universal-argument(C-u) to copy/cut whole buffer.
+(defun xah-copy-line-or-region ()
+  "Copy current line or selection.
+When called repeatedly, append copy subsequent lines.
+When `universal-argument' is called first, copy whole buffer (respects `narrow-to-region').
+
+URL `http://xahlee.info/emacs/emacs/emacs_copy_cut_current_line.html'
+Version: 2010-05-21 2025-02-08"
+  (interactive)
+  (let ((inhibit-field-text-motion nil))
+    (if current-prefix-arg
+        (progn
+          (copy-region-as-kill (point-min) (point-max)))
+      (if (region-active-p)
+            (copy-region-as-kill (region-beginning) (region-end))
+        (if (eq last-command this-command)
+            (if (eobp)
+                (progn )
+              (progn
+                (kill-append "\n" nil)
+                (kill-append
+                 (buffer-substring-no-properties (line-beginning-position) (line-end-position))
+                 nil)))
+          (if (eobp)
+              (if (eq (char-before) 10 )
+                  (progn )
+                (progn
+                  (copy-region-as-kill (line-beginning-position) (line-end-position))))
+              (copy-region-as-kill (line-beginning-position) (line-end-position))))))))
+(defun xah-cut-line-or-region ()
+  "Cut current line or selection.
+When `universal-argument' is called first, cut whole buffer (respects `narrow-to-region').
+
+URL `http://xahlee.info/emacs/emacs/emacs_copy_cut_current_line.html'
+Version: 2010-05-21 2015-06-10"
+  (interactive)
+  (if current-prefix-arg
+      (progn ; not using kill-region because we don't want to include previous kill
+        (kill-new (buffer-string))
+        (delete-region (point-min) (point-max)))
+    (progn (if (region-active-p)
+               (kill-region (region-beginning) (region-end) t)
+             (kill-region (line-beginning-position) (line-beginning-position 2))))))
+
 (bind-keys*
   ("M-i" . previous-line); move around
   ("C-j" . backward-char)
@@ -1658,8 +1808,9 @@ indentation rules."
   ("C-n" . open-line-below)
   ("M-n" . open-line-above)
   ("M-w" . kill-sentence)
-  ("C-c" . kill-ring-save); cut/copy/paste
-  ("M-c" . kill-region)
+  ; cut/copy/paste, I don't use cua-mode.
+  ("C-c" . xah-copy-line-or-region)
+  ("M-c" . xah-cut-line-or-region); translate from C-x
   ("C-v" . yank)
   ("M-v" . yank-pop)
   ("C-z" . undo)
@@ -1679,10 +1830,6 @@ indentation rules."
 (keyboard-translate ?\C-x ?\M-c); translate C-x to cut
 
 ; TODO C/M-w C/M-y C-m
-; prefix for git
-; C-/ (previously undo
-;  (bind-keys :map prog-mode-map
-;           ("C-." . lsp-find-definition)
 
 ;; create prefix
 (define-prefix-command 'my-prefix-map)
@@ -1722,10 +1869,6 @@ indentation rules."
 (use-package drag-stuff
   :bind (("<M-up>". drag-stuff-up)
          ("<M-down>" . drag-stuff-down)))
-
-;; C-x w #num to switch frame
-(use-package winum
-  :hook (after-init . winum-mode))
 
 ;; Display ugly ^L page breaks as tidy horizontal lines
 (use-package page-break-lines

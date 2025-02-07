@@ -34,7 +34,7 @@
 
 ;; custom.el
 (add-to-list 'load-path (expand-file-name (concat user-emacs-directory "lisp")))
-(setq custom-file (expand-file-name "custom.el" user-emacs-directory))
+(setq custom-file (locate-user-emacs-file "custom.el"))
 
 ;; To use the MELPA repository
 (require 'package)
@@ -55,13 +55,17 @@
 ;; Prefer the newest commit over the latest release by default for :vc
 (setq use-package-vc-prefer-newest t)
 
-(org-babel-load-file "~/.config/emacs/configuration.org")
+;; Load the main configuration file.
+(setq org-configuration-file (locate-user-emacs-file "configuration.org"))
+(when (file-exists-p org-configuration-file)
+  (org-babel-load-file org-configuration-file))
+
+(when (file-directory-p "~/projects/")
+  (setq default-directory "~/projects/"))
+(setq initial-major-mode 'org-mode)
 
 (when (file-exists-p custom-file)
   (load-file custom-file))
-
-(setq default-directory "~/projects/")
-(setq initial-major-mode 'org-mode)
 
 ;; Greeting
 (defun display-startup-echo-area-message ()
